@@ -1,0 +1,7 @@
+#!/bin/bash
+# from https://shreve.io/posts/calculating-current-cpu-usage-on-linux
+# modified by Kr1stj0n C1k0
+
+count=$1
+
+mpstat 1 $count | awk '$13 ~ /[0-9.]+/ { print 100 - $13 }'

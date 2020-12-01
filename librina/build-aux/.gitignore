@@ -1,0 +1,10 @@
+/compile
+/config.guess
+/config.sub
+/depcomp
+/install-sh
+/ltmain.sh
+/missing
+/py-compile
+/ar-lib
+/test-driver

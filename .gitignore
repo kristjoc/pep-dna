@@ -1,0 +1,13 @@
+/build
+/inst
+tags
+
+/include/.autotools
+/include/.cproject
+/include/.project
+/include/.settings/
+
+/plugins/.autotools
+/plugins/.cproject
+/plugins/.project
+/plugins/.settings/

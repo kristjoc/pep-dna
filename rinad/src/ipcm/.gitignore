@@ -1,0 +1,6 @@
+*.o
+
+/ipcm
+/test-empty
+
+/rinad-ipcm.pc

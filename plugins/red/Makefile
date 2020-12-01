@@ -1,0 +1,36 @@
+#
+# Written by Francesco Salvestrini <f.salvestrini@nextworks.it>
+#
+
+ifndef KREL
+KREL=`uname -r`
+endif
+
+ifndef KDIR
+KDIR=/lib/modules/$(KREL)/build
+endif
+
+ifndef IRATI_KSDIR
+IRATI_KSDIR=${PWD}/../../kernel
+endif
+
+ccflags-y += -Wtype-limits -I${src}/../../kernel -I${src}/../../include
+# ccflags-y += -DCONFIG_RMT_DEBUG
+
+obj-m := red-plugin.o
+red-plugin-y := rmt-ps-debug.o dtcp-ps-debug.o red-ps.o rmt-ps-red.o dtcp-ps-red.o
+
+all:
+	$(MAKE) -C $(KDIR) KBUILD_EXTRA_SYMBOLS=${IRATI_KSDIR}/Module.symvers M=$$PWD
+
+clean:
+	rm -r -f *.o *.ko *.mod.c *.mod.o Module.symvers .*.cmd .tmp_versions modules.order
+
+install:
+	$(MAKE) -C $(KDIR) M=$$PWD modules_install
+	cp red-plugin.manifest /lib/modules/$(KREL)/extra/
+	depmod -a
+
+uninstall:
+	@echo "This target has not been implemented yet"
+	@exit 1

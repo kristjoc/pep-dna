@@ -1,0 +1,15 @@
+Metadata-Version: 1.0
+Name: httping
+Version: 0.2
+Summary: ping-like tool for pinging web servers via http
+Home-page: http://github.com/stone/httping
+Author: stone, kr1stj0n
+Author-email: stone4x4@gmail.com
+License: GPL
+Description: UNKNOWN
+Keywords: networking ping http internet
+Platform: UNKNOWN
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Programming Language :: Python3
+Classifier: Development Status :: 4 - Beta
+Classifier: Topic :: Internet

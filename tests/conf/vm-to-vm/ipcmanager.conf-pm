@@ -1,0 +1,48 @@
+{
+    "configFileVersion": "1.4.1",
+    "localConfiguration": {
+        "installationPath": "/usr/local/irati/bin",
+        "libraryPath": "/usr/local/irati/lib",
+        "logPath": "/usr/local/irati/var/log",
+        "consoleSocket": "/usr/local/irati/var/run/ipcm-console.sock",
+	"pluginsPaths": [
+		"/usr/local/irati/lib/rinad/ipcp",
+		"/lib/modules/4.1.10-irati/extra"
+	]
+    },
+    "ipcProcessesToCreate": [
+        {
+            "apName": "h.hv.1.IPCP",
+            "apInstance": "1",
+            "difName": "hv.1.DIF"
+        },
+        {
+            "apName": "h.hv.2.IPCP",
+            "apInstance": "1",
+            "difName": "hv.2.DIF"
+        },
+        {
+            "apName": "h.n.1.IPCP",
+            "apInstance": "1",
+            "difName": "n.DIF",
+            "difsToRegisterAt": [
+                "hv.1.DIF",
+                "hv.2.DIF"
+            ]
+        }
+    ],
+    "difConfigurations": [
+        {
+            "name": "hv.1.DIF",
+            "template": "shim-hv.dif"
+        },
+        {
+            "name": "hv.2.DIF",
+            "template": "shim-hv2.dif"
+        },
+        {
+            "name": "n.DIF",
+            "template": "vm-to-vm.dif"
+        }
+    ]
+}

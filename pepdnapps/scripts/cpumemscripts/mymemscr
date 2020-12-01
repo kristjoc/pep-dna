@@ -1,0 +1,47 @@
+#!/bin/bash
+# by Paul Colby (http://colby.id.au), no rights reserved ;)
+# modified by Kr1stj0n C1k0
+# MemUsed = MemTotal - MemFree - Buffers - Cached - SReclaimable - Shmem
+
+TIME=0
+
+while true; do
+
+  MEMORY=(`cat /proc/meminfo | grep '^MemTotal: '`) # Get the MemFree statistics.
+  MEMTOTAL=${MEMORY[1]}                        # Get the idle CPU time.
+
+  MEMORY=(`cat /proc/meminfo | grep '^MemFree: '`) # Get the MemFree statistics.
+  MEMFREE=${MEMORY[1]}                        # Get the idle CPU time.
+
+  MEMORY=(`cat /proc/meminfo | grep '^Buffers: '`) # Get the MemFree statistics.
+  BUFFERS=${MEMORY[1]}                        # Get the idle CPU time.
+
+  MEMORY=(`cat /proc/meminfo | grep -w '^Cashed: '`) # Get the MemFree statistics.
+  CASHED=${MEMORY[1]}                        # Get the idle CPU time.
+
+  MEMORY=(`cat /proc/meminfo | grep '^SReclaimable: '`) # Get the MemFree statistics.
+  SRECLAIMABLE=${MEMORY[1]}                        # Get the idle CPU time.
+
+  MEMORY=(`cat /proc/meminfo | grep '^Shmem: '`) # Get the MemFree statistics.
+  SHMEM=${MEMORY[1]}                        # Get the idle CPU time.
+
+  # Calculate the CPU usage since we last checked.
+  let "MEMUSED=$MEMTOTAL-$MEMFREE-$BUFFERS-$CASHED-$SRECLAIMABLE-$SHMEM"
+
+  if [[ $TIME -lt 1 ]]; then
+	  TIME=$((TIME + 1))
+	  sleep 1
+	  continue
+  fi
+
+  if [[ $TIME -lt 10 ]]; then
+  	echo -en "$MEMUSED\n"
+  else
+  	echo -en "$MEMUSED\n"
+  fi
+
+  TIME=$((TIME + 1))
+
+  # Wait before checking again.
+  sleep 1
+done

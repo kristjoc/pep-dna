@@ -1,0 +1,48 @@
+{
+    "configFileVersion": "1.4.1",
+    "localConfiguration": {
+        "installationPath": "/usr/local/irati/bin",
+        "libraryPath": "/usr/local/irati/lib",
+        "logPath": "/usr/local/irati/var/log",
+        "consoleSocket": "/usr/local/irati/var/run/ipcm-console.sock",
+	"pluginsPaths": [
+		"/usr/local/irati/lib/rinad/ipcp",
+		"/lib/modules/4.1.10-irati/extra"
+	]
+    },
+    "ipcProcessesToCreate": [
+        {
+            "apName": "h.hv.nxw.IPCP",
+            "apInstance": "1",
+            "difName": "hv.nxw.DIF"
+        },
+        {
+            "apName": "eth.nxw.IPCP",
+            "apInstance": "1",
+            "difName": "300"
+        },
+        {
+            "apName": "h.n.nxw.IPCP",
+            "apInstance": "1",
+            "difName": "n.DIF",
+            "difsToRegisterAt": [
+                "hv.nxw.DIF",
+                "300"
+            ]
+        }
+    ],
+    "difConfigurations": [
+        {
+            "name": "hv.nxw.DIF",
+            "template": "shim-hv.dif"
+        },
+        {
+            "name": "300",
+            "template": "shim-eth-vlan2.dif"
+        },
+        {
+            "name": "n.DIF",
+            "template": "vpn2.dif"
+        }
+    ]
+}

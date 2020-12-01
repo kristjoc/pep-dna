@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+test -e ./docs || mkdir ./docs
+set -uex
+
+echo "<html><title>httperfpy</title><body><pre>" > ./docs/index.html
+cat ./README.txt >> ./docs/index.html
+echo "</pre></body></html>" >> ./docs/index.html
+
+cd docs
+zip httperfpy ./index.html
+

@@ -1,0 +1,31 @@
+Congestion Detection Rate Reduction policy for OpenIRATI.
+Author: Kewin Rausch <kewin.rausch@create-net.org>
+
+********************************************************************************
+RESUME
+********************************************************************************
+
+This is a DTCP level policy. It stores the value of the QoS avg. bandwidth as 
+the preferred minimum rate at which the flow must be set in case of congestion.
+Now this policy assumes a behavior which is inspired by DCTCP strategies: it 
+counts how many congested pdus arrives in the single flow and adjust the rate
+of this one according to the level of congestion.
+
+Such propotion is inverse proportional between the Minimum Granted Bandwidth
+assigned and the reset rate. So, the more the congestion level, the more the 
+flow adapt moves it's rate in the MGB direction.
+
+It's also possible to select a direct swap, so that once congestion is 
+encountered the flow immediately moves to the MGB.
+
+
+
+********************************************************************************
+SYSFS FOR DEBUG/INTERACTION
+********************************************************************************
+
+Loading the policy will cause sysfs entries to be spawned under /sys/cdrr.
+You can use them to log how everything is going. 
+
+The only value which can be changed using sysfs is 'link_rate', which allows a 
+fast change of this limit and of the reset rate.

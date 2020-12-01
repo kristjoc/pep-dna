@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -xue
+python ./unit/httperf_unit.py 
+python ./unit/parser_unit.py 
+

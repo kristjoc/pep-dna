@@ -1,0 +1,60 @@
+#!/bin/bash
+
+KERNBUILDDIR="/lib/modules/`uname -r`/build"
+CONFIG_PEPDNA_LOCALHOST="n"
+CONFIG_PEPDNA_DEBUG="n"
+CONFIG_PEPDNA_RINA="n"
+CONFIG_PEPDNA_UDP="n"
+
+# Parse options from ./configure --
+while [[ $# > 0 ]]
+do
+        key="$1"
+        case $key in
+                "--with-localhost")
+                CONFIG_PEPDNA_LOCALHOST="y"
+                ;;
+
+                "--with-debug")
+                CONFIG_PEPDNA_DEBUG="y"
+                ;;
+
+                "--with-udp")
+                CONFIG_PEPDNA_UDP="y"
+                ;;
+
+                "--with-rina")
+                CONFIG_PEPDNA_RINA="y"
+                ;;
+
+                # NEW ARCHITECTURE
+                # "--with-new-arch")
+                # CONFIG_PEPDNA_NEW_ARCH="y"
+                # ;;
+
+                *)
+                echo "Unknown option '$key'"
+                exit 255
+                ;;
+        esac
+        shift
+done
+
+# Check if kernel headers are there for out-of-tree build
+if [ ! -d $KERNBUILDDIR ]; then
+        echo "Cannot find '$KERNBUILDDIR' kernel build directory"
+        echo "Make sure headers for the running kernel are installed"
+        exit 255
+fi
+
+# Generate the main Makefile
+cp Makefile.in Makefile
+sed -i "s|@KERNBUILDDIR@|$KERNBUILDDIR|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_RINA@|${CONFIG_PEPDNA_RINA}|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_UDP@|${CONFIG_PEPDNA_UDP}|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_DEBUG@|${CONFIG_PEPDNA_DEBUG}|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_LOCALHOST@|${CONFIG_PEPDNA_LOCALHOST}|g" Makefile
+
+echo "PEP-DNA configuration phase completed"
+echo "Run 'make all' to compile the module"
+echo "Run 'make install' to install the module"

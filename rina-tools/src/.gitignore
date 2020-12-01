@@ -1,0 +1,9 @@
+/stamp-h1
+/config.h
+/config.h.in
+
+*.[ao]
+
+/rina-mem-stats
+/rina-show-plots
+/rina-bug-report

@@ -108,8 +108,8 @@ Additional tools are required to configure Linux hosts, run the experiments and 
 <!-- USAGE EXAMPLES -->
 ## Reproducibility
 
-We aim to make our work entirely reproducible and encourage interested researchers to test the code and replicate the reported experimental results. The PEP-DNA implementation and documentation needed to reproduce all the experiments described in the paper are available in this public repository. The tools we developed to the run the experiments were installed at Step 4 of the previous section. The scripts for automated testing, analysis and plotting of the generated data are located at https://github.com/kr1stj0n/pep-dna/tree/main/pepdnapps/scripts/ alongside with a detailed README.md file.
-Please, read the README.md file for a detailed explanation on how to set the variables for your own testbed environment, run all the experiments and plot the generated dataset.
+We aim to make our work entirely reproducible and encourage interested researchers to test the code and replicate the reported experimental results. The PEP-DNA implementation and documentation needed to reproduce all the experiments described in the paper are available in this public repository. The tools we developed to the run the experiments were installed at Step 4 of the previous section. The scripts for automated testing, analysis and plotting of the generated data are located at https://github.com/kr1stj0n/pep-dna/tree/main/pepdnapps/scripts/ alongside with a detailed README_scripts.md file.
+Please, read the README_scripts.md file for a detailed explanation on how to set the variables for your own testbed environment, run all the experiments and plot the generated dataset.
 
 _For more step-by-step examples on how to use PEP-DNA in different scenarios, please refer to the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages._
 

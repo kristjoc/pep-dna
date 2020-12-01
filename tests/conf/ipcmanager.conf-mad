@@ -1,0 +1,39 @@
+{
+    "configFileVersion": "1.4.1",
+    "localConfiguration": {
+        "installationPath": "/usr/local/irati/bin",
+        "libraryPath": "/usr/local/irati/lib",
+        "logPath": "/usr/local/irati/var/log",
+        "consoleSocket": "/usr/local/irati/var/run/ipcm-console.sock",
+	"pluginsPaths": [
+		"/usr/local/irati/lib/rinad/ipcp",
+		"/lib/modules/4.1.10-irati/extra"
+	]
+    },
+    "ipcProcessesToCreate": [
+        {
+            "apName": "normal-1.IPCP",
+            "apInstance": "1",
+            "difName": "normal.DIF",
+            "difsToRegisterAt": [
+            ]
+        }
+    ],
+    "difConfigurations": [
+        {
+            "name": "normal.DIF",
+            "template": "default.dif"
+        }
+    ],
+    "addons" : {
+        "mad" : {
+            "managerAppName" : "rina.apps.mad-1--",
+            "managerConnections" : [
+                {
+                    "managerAppName" : "rina.apps.manager-1--",
+                    "DIF" : "normal.DIF"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,50 @@
+Receiver congestion Detection, Sender Reaction policies.
+Author: Kewin Rausch <kewin.rausch@create-net.org>
+
+********************************************************************************
+RESUME
+********************************************************************************
+This set of policies will provide a congestion control set of policies which 
+allows to take advantage of the rate based flow control to avoid congestions in 
+your favourite topology.
+
+The set of policies now allow to take also advantage of the Equal Cost Multi 
+Path routing strategy (introduced by ATOS). We just personalized further such
+algorithm in order to perform choose between different way of routing on 
+multiple paths. 
+
+Whenever congestion happens in an intermediate node, it will mark pdus which
+pass through it, leaving other flows free to achieve the desired rate (if they
+took different routes).
+
+********************************************************************************
+COMPONENTS
+********************************************************************************
+- ecn: Explicit Congestion Notification policy.
+	a very basic congestion detection RMT policy which starts to mark
+	packets as Congested when you start to use the RMT queues.
+	
+- cdrr: Congestion Detection Rate Reduction policy.
+	A DTCP policy which adapts the flows to their average bandwidth when 
+	congestion-marked pdus are detected. If no congestion is occurring then 
+	it allow the flow to push at a predefined rate that you can set.
+		
+- fare: Flow Allocation Rate Enforcement policy.
+	A FA policy which reads set the flow rate to the average bandwidth 
+	requested (which we threat as Minimum Granted Bandwidth).
+	
+- pffb: Pdu Forwarding Flow Balancing policy.
+	This policy offer different way of forwarding. Some of the strategies
+	are possible because they expect a DC network with some restriction, 
+	while other are just good for every topology.
+	
+These policies now has become a little more dependant one from the other.
+
+********************************************************************************
+BUILD
+********************************************************************************
+For kernel mode components ECN, CDRR and PFFB:
+use compilation guideline on how compile IRATI modules.
+
+For user space mode component FARE:
+use compilation guideline on how compile IRATI modules.

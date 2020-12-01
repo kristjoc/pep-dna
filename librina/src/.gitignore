@@ -1,0 +1,14 @@
+/stamp-h1
+/config.h
+/config.h.in
+
+/*.[ao]
+/*.l[ao]
+
+/librina.pc
+
+/test-linking
+
+/*.stamp
+/*.pb.*
+

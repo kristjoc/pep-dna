@@ -1,0 +1,50 @@
+{
+    "configFileVersion": "1.4.1",
+    "localConfiguration": {
+        "installationPath": "/usr/local/irati/bin",
+        "libraryPath": "/usr/local/irati/lib",
+        "logPath": "/usr/local/irati/var/log",
+        "consoleSocket": "/usr/local/irati/var/run/ipcm-console.sock",
+	"pluginsPaths": [
+		"/usr/local/irati/lib/rinad/ipcp",
+		"/lib/modules/4.1.10-irati/extra"
+	]
+    },
+    "ipcProcessesToCreate": [
+        {
+            "apName": "test-eth",
+            "apInstance": "1",
+            "difName": "300"
+        },
+        {
+            "apName": "test1.IRATI",
+            "apInstance": "1",
+            "difName": "normal.DIF",
+            "difsToRegisterAt": [
+                "300"
+            ]
+        },
+        {
+            "apName": "Ada",
+            "apInstance": "1",
+            "difName": "fantastic.DIF",
+            "difsToRegisterAt": [
+                "normal.DIF"
+            ]
+        }
+    ],
+    "difConfigurations": [
+        {
+            "name": "fantastic.DIF",
+            "template": "vpn.dif"
+        },
+        {
+            "name": "300",
+            "template": "shim-eth-vlan.dif"
+        },
+        {
+            "name": "normal.DIF",
+            "template": "default.dif"
+        }
+    ]
+}

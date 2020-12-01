@@ -1,0 +1,49 @@
+#
+# Initial Makefile for PEPDNA
+#
+
+KERNBUILDDIR=@KERNBUILDDIR@
+KBUILD_EXTRA_SYMBOLS := /rina/kernel/Module.symvers
+
+ccflags-y += -I/rina/kernel/
+ccflags-y += -I/rina/include/
+ccflags-y += -Wtype-limits
+ifeq ($(CONFIG_PEPDNA_DEBUG),y)
+ccflags-y += -g -DDEBUG
+ccflags-y += -DCONFIG_PEPDNA_DEBUG
+endif
+ifeq ($(CONFIG_PEPDNA_LOCALHOST),y)
+ccflags-y += -DCONFIG_PEPDNA_LOCALHOST
+endif
+ifeq ($(CONFIG_PEPDNA_RINA),y)
+ccflags-y += -DCONFIG_PEPDNA_RINA
+endif
+ifeq ($(CONFIG_PEPDNA_UDP),y)
+ccflags-y += -DCONFIG_PEPDNA_UDP
+endif
+EXTRA_CFLAGS += -I$(PWD)/../include/
+
+obj-m += pepdna.o
+pepdna-y :=	core.o server.o connection.o hash.o \
+		netlink.o tcp.o tcp_listen.o tcp_connect.o \
+		tcp_utils.o
+
+pepdna-$(CONFIG_PEPDNA_RINA) += rina.o
+
+pepdna-$(CONFIG_SYSCTL) += sysctl.o
+
+all:
+	cp kfa/mykfa.h /rina/kernel/kfa.h
+	cp kfa/mykfa.c /rina/kernel/kfa.c
+	$(MAKE) -C $(KERNBUILDDIR) CONFIG_PEPDNA_RINA=@CONFIG_PEPDNA_RINA@ CONFIG_PEPDNA_UDP=@CONFIG_PEPDNA_UDP@ CONFIG_PEPDNA_DEBUG=@CONFIG_PEPDNA_DEBUG@ CONFIG_PEPDNA_LOCALHOST=@CONFIG_PEPDNA_LOCALHOST@ M=$(PWD) modules
+	cp kfa/kfa.h /rina/kernel/kfa.h
+	cp kfa/kfa.c /rina/kernel/kfa.c
+
+install:
+	$(MAKE) -C $(KERNBUILDDIR) M=$(PWD) modules_install
+	depmod -a
+clean:
+	$(MAKE) -C $(KERNBUILDDIR) M=$(PWD) clean
+uninstall:
+	rm -f /lib/modules/`uname -r`/extra/pepdna.ko
+

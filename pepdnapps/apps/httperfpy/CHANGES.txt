@@ -1,0 +1,3 @@
+v0.0.2, 09/16/2012 -- updating readme
+v0.0.1, 09/15/2012 -- initial release
+

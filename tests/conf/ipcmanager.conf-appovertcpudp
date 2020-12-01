@@ -1,0 +1,17 @@
+{
+    "configFileVersion": "1.4.1",
+    "localConfiguration" : {
+        "installationPath" : "/usr/local/irati/bin",
+        "libraryPath" : "/usr/local/irati/lib",
+        "consolePort" : "/usr/local/irati/var/run/ipcm-console.sock"
+    },
+    "ipcProcessesToCreate" : [ {
+        "apName" : "test-shim",
+        "apInstance" : "1",
+        "difName" : "test.DIF"
+     } ],
+    "difConfigurations" : [ {
+        "name" : "test.DIF",
+        "template" : "shim-tcp-udp.dif"
+     } ] 
+}

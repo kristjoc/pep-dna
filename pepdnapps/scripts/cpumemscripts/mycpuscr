@@ -1,0 +1,53 @@
+#!/bin/bash
+# by Paul Colby (http://colby.id.au), no rights reserved ;)
+# modified by Kr1stj0n C1k0
+
+PREV_TOTAL=0
+PREV_IDLE=0
+TIME=0
+
+while true; do
+
+  CPU=(`cat /proc/stat | grep '^cpu '`) # Get the total CPU statistics.
+  unset CPU[0]                          # Discard the "cpu" prefix.
+  IDLE=${CPU[4]}                        # Get the idle CPU time.
+
+  # Calculate the total CPU time.
+  TOTAL=0
+
+  for VALUE in "${CPU[@]:0:4}"; do
+    let "TOTAL=$TOTAL+$VALUE"
+  done
+
+  # Calculate the CPU usage since we last checked.
+  let "DIFF_IDLE=$IDLE-$PREV_IDLE"
+  let "DIFF_TOTAL=$TOTAL-$PREV_TOTAL"
+  let "DIFF_USAGE=(1000*($DIFF_TOTAL-$DIFF_IDLE)/$DIFF_TOTAL+5)/10"
+
+  if [[ $TIME -eq 0 ]]; then
+	TIME=$((TIME + 1))
+	sleep 1
+	continue
+  fi
+
+  # if [[ $DIFF_USAGE -eq 0 ]]; then
+	# echo "0.1"
+	# sleep 1
+	# continue
+  # fi
+
+  if [[ $TIME -ne 0 ]] && [[ $TIME -lt 10 ]]; then
+  	echo -en "$DIFF_USAGE\n"
+  elif [[ $TIME -ne 0 ]]; then
+  	echo -en "$DIFF_USAGE\n"
+  fi
+
+  TIME=$((TIME + 1))
+
+  # Remember the total and idle CPU times for the next check.
+  PREV_TOTAL="$TOTAL"
+  PREV_IDLE="$IDLE"
+
+  # Wait before checking again.
+  sleep 1
+done
