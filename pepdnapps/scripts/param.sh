@@ -22,7 +22,7 @@ readonly global_mark="333"
 readonly global_filename="4g.bin"
 # No delay emulated
 readonly global_def_delay="0"
-# Default ethernet speed 10000Gbps
+# Default ethernet speed 10000Mbps
 readonly global_def_speed="10000"
 readonly global_speed_vec=("10000")
 # If you want to run the experiments for different ethernet speeds, uncomment the line below
