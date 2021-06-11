@@ -1,8 +1,6 @@
 *~
 *.swp
 
-*.orig
-
 .deps
 .libs
 .dirstamp

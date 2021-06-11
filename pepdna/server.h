@@ -33,10 +33,12 @@ struct sock;
 struct nl_msg;
 
 enum server_mode {
-        TCP2TCP = 0,
-        TCP2RINA,
-        RINA2TCP,
-        RINA2RINA
+	TCP2TCP = 0,
+	TCP2RINA,
+	RINA2TCP,
+	RINA2RINA,
+	TCP2CCN,
+	CCN2TCP
 };
 
 

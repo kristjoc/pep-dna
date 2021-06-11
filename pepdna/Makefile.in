@@ -18,6 +18,9 @@ endif
 ifeq ($(CONFIG_PEPDNA_RINA),y)
 ccflags-y += -DCONFIG_PEPDNA_RINA
 endif
+ifeq ($(CONFIG_PEPDNA_CCN),y)
+ccflags-y += -DCONFIG_PEPDNA_CCN
+endif
 ifeq ($(CONFIG_PEPDNA_UDP),y)
 ccflags-y += -DCONFIG_PEPDNA_UDP
 endif
@@ -35,7 +38,7 @@ pepdna-$(CONFIG_SYSCTL) += sysctl.o
 all:
 	cp kfa/mykfa.h /rina/kernel/kfa.h
 	cp kfa/mykfa.c /rina/kernel/kfa.c
-	$(MAKE) -C $(KERNBUILDDIR) CONFIG_PEPDNA_RINA=@CONFIG_PEPDNA_RINA@ CONFIG_PEPDNA_UDP=@CONFIG_PEPDNA_UDP@ CONFIG_PEPDNA_DEBUG=@CONFIG_PEPDNA_DEBUG@ CONFIG_PEPDNA_LOCALHOST=@CONFIG_PEPDNA_LOCALHOST@ M=$(PWD) modules
+	$(MAKE) -C $(KERNBUILDDIR) CONFIG_PEPDNA_RINA=@CONFIG_PEPDNA_RINA@ CONFIG_PEPDNA_CCN=@CONFIG_PEPDNA_CCN @CONFIG_PEPDNA_UDP=@CONFIG_PEPDNA_UDP@ CONFIG_PEPDNA_DEBUG=@CONFIG_PEPDNA_DEBUG@ CONFIG_PEPDNA_LOCALHOST=@CONFIG_PEPDNA_LOCALHOST@ M=$(PWD) modules
 	cp kfa/kfa.h /rina/kernel/kfa.h
 	cp kfa/kfa.c /rina/kernel/kfa.c
 
@@ -46,4 +49,3 @@ clean:
 	$(MAKE) -C $(KERNBUILDDIR) M=$(PWD) clean
 uninstall:
 	rm -f /lib/modules/`uname -r`/extra/pepdna.ko
-

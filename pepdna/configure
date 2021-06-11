@@ -4,6 +4,7 @@ KERNBUILDDIR="/lib/modules/`uname -r`/build"
 CONFIG_PEPDNA_LOCALHOST="n"
 CONFIG_PEPDNA_DEBUG="n"
 CONFIG_PEPDNA_RINA="n"
+CONFIG_PEPDNA_CCN="n"
 CONFIG_PEPDNA_UDP="n"
 
 # Parse options from ./configure --
@@ -25,6 +26,10 @@ do
 
                 "--with-rina")
                 CONFIG_PEPDNA_RINA="y"
+                ;;
+
+                "--with-ccn")
+                CONFIG_PEPDNA_CCN="y"
                 ;;
 
                 # NEW ARCHITECTURE
@@ -51,6 +56,7 @@ fi
 cp Makefile.in Makefile
 sed -i "s|@KERNBUILDDIR@|$KERNBUILDDIR|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_RINA@|${CONFIG_PEPDNA_RINA}|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_CCN@|${CONFIG_PEPDNA_CCN}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_UDP@|${CONFIG_PEPDNA_UDP}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_DEBUG@|${CONFIG_PEPDNA_DEBUG}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_LOCALHOST@|${CONFIG_PEPDNA_LOCALHOST}|g" Makefile
