@@ -14,7 +14,6 @@
 
 #include "httpapp.h"
 #include "rina/api.h"
-#include "/rina/librina/src/ctrl.h"
 
 volatile sig_atomic_t running = 1;
 static void sig_handler(int signum) {

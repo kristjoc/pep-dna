@@ -17,7 +17,6 @@
 #include <arpa/inet.h>
 
 #include "rina/api.h"
-#include "/rina/librina/src/ctrl.h"
 
 #define NET_SOFTERROR -1
 #define NET_HARDERROR -2
