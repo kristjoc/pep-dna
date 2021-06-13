@@ -22,7 +22,7 @@
 
 #include <linux/netdevice.h>
 
-#define PEPDNA_MOD_VER "0.2.6"
+#define PEPDNA_MOD_VER "0.3.0"
 
 extern int sysctl_pepdna_sock_rmem[3] __read_mostly;
 extern int sysctl_pepdna_sock_wmem[3] __read_mostly;
@@ -39,7 +39,7 @@ void pep_debug(char *fmt, ...)
 #endif
 
 #define pep_err(fmt, args...) pr_err("pepdna[ERR] %s(): " fmt"\n", \
-                                       __func__ , ##args)
+                                     __func__ , ##args)
 #define pep_info(fmt, args...) pr_info("pepdna[INFO] %s(): " fmt"\n", \
                                        __func__ , ##args)
 

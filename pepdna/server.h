@@ -35,10 +35,11 @@ struct nl_msg;
 enum server_mode {
 	TCP2TCP = 0,
 	TCP2RINA,
+	TCP2CCN,
 	RINA2TCP,
 	RINA2RINA,
-	TCP2CCN,
-	CCN2TCP
+	CCN2TCP,
+	CCN2CCN
 };
 
 

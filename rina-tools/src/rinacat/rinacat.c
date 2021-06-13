@@ -44,7 +44,6 @@
 #include <signal.h> // for sigaction
 
 #include "rina/api.h"
-#include "/rina/librina/src/ctrl.h"
 
 #define NON_PERSISTENT                                                         \
     0 // value that indicates to do the command once, then terminate, >0 ==

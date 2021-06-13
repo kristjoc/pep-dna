@@ -443,21 +443,34 @@ int download(int sock, char *file_name, unsigned long content_length)
     }
 
     set_blocking(sock, true);
-    while (hasrecieve < content_length) {
-        len = read(sock, buf, BUFSIZE);
-        if (len > 0) {
-            if ((write(fp, buf, len)) < 0)
-                break;
-            hasrecieve += len;
-            /* progress_bar(hasrecieve, content_length); */
-        } else
-            break;
+    if (content_length) {
+	while (hasrecieve < content_length) {
+	    len = read(sock, buf, BUFSIZE);
+	    if (len > 0) {
+		if ((write(fp, buf, len)) < 0)
+		    break;
+		hasrecieve += len;
+		/* progress_bar(hasrecieve, content_length); */
+	    } else
+		break;
+	}
+    } else {
+	do {
+	    len = read(sock, buf, BUFSIZE);
+	    if (len > 0) {
+		if ((write(fp, buf, len)) < 0)
+		    break;
+		hasrecieve += len;
+		/* progress_bar(hasrecieve, content_length); */
+	    } else
+		break;
+	} while (len > 0);
     }
 
     close(fp);
 
     /* printf("\nDownloaded  %lu / %lu bytes.\n", hasrecieve, content_length); */
-    if (hasrecieve == content_length) {
+    if (hasrecieve == content_length || !content_length) {
         /* printf("It is finished! :-)\n"); */
         return 1;
     } else {

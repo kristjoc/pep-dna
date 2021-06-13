@@ -52,6 +52,10 @@ static int pepdna_r2r_start(struct pepdna_server *);
 static int pepdna_r2i_start(struct pepdna_server *);
 static int pepdna_i2r_start(struct pepdna_server *);
 #endif
+#ifdef CONFIG_PEPDNA_CCN
+static int pepdna_i2c_start(struct pepdna_server *);
+static int pepdna_c2i_start(struct pepdna_server *);
+#endif
 
 /*
  * Init workqueue_struct
@@ -83,7 +87,7 @@ int pepdna_work_init(struct pepdna_server *srv)
         }
         srv->accept_wq = wq;
 
-        if (srv->mode < 3) { /* First three enum PEPDNA modes */
+        if (srv->mode < 4) { /* First four enum PEPDNA modes */
                 wq = alloc_workqueue("connect_alloc_wq", WQ_HIGHPRI|WQ_UNBOUND,
                                 max_active);
                 if (!wq) {
@@ -315,6 +319,45 @@ void pepdna_con_li2ri_work(struct work_struct *work)
         pepdna_con_put(con);
 }
 
+/*
+ * TCP2TCP scenario
+ * Forwarding from Left to Right INTERNET domain
+ * ------------------------------------------------------------------------- */
+void pepdna_con_li2ri_work(struct work_struct *work)
+{
+        struct pepdna_con *con = container_of(work, struct pepdna_con, l2r_work);
+        int rc = 0;
+
+        while (lconnected(con)) {
+                if ((rc = pepdna_con_i2i_fwd(con->lsock, con->rsock)) <= 0) {
+                        if (rc == -EAGAIN) //FIXME Handle -EAGAIN flood
+                                break;
+                        pepdna_con_close(con);
+                        break;
+                }
+        }
+        pepdna_con_put(con);
+}
+
+/* pepdna_con_data_ready - interrupt callback indicating the socket has data
+ * The queued work is launched into ?
+ * ------------------------------------------------------------------------- */
+void pepdna_l2r_conn_data_ready(struct sock *sk)
+{
+        struct pepdna_con *con = NULL;
+
+        pep_debug("data ready on left side");
+        read_lock_bh(&sk->sk_callback_lock);
+        con = sk->sk_user_data;
+        if (lconnected(con)) {
+                pepdna_con_get(con);
+                if (!queue_work(con->server->l2r_wq, &con->l2r_work)) {
+                        pep_debug("l2r_work was already on a queue");
+                        pepdna_con_put(con);
+                }
+        }
+        read_unlock_bh(&sk->sk_callback_lock);
+}
 /* pepdna_con_data_ready - interrupt callback indicating the socket has data
  * The queued work is launched into ?
  * ------------------------------------------------------------------------- */
@@ -516,6 +559,85 @@ static int pepdna_r2r_start(struct pepdna_server *srv)
 }
 #endif
 
+#ifdef CONFIG_PEPDNA_CCN
+/*
+ * Start TCP-CCN task
+ * This function is called by pepdna_server_start() @'server.c'
+ * --------------------------------------------------------------------------*/
+static int pepdna_i2c_start(struct pepdna_server *srv)
+{
+        int rc = 0;
+
+        INIT_WORK(&srv->accept_work, pepdna_acceptor_work);
+
+        rc = pepdna_work_init(srv);
+        if (rc < 0)
+                return rc;
+
+        rc = pepdna_tcp_listen_init(srv);
+        if (rc < 0) {
+                pepdna_work_stop(srv);
+                return rc;
+        }
+
+        nf_register_net_hooks(&init_net, pepdna_nf_ops,
+                        ARRAY_SIZE(pepdna_nf_ops));
+        return 0;
+}
+
+/*
+ * Start CCN-TCP task
+ * This function is called by pepdna_server_start() @'server.c'
+ * --------------------------------------------------------------------------*/
+static int pepdna_c2i_start(struct pepdna_server *srv)
+{
+	/* TODO: Not yet implemented! */
+        /* int rc = 0; */
+
+        /* INIT_WORK(&srv->accept_work, pepdna_acceptor_work); */
+
+        /* rc = pepdna_work_init(srv); */
+        /* if (rc < 0) */
+        /*         return rc; */
+
+        /* rc = pepdna_tcp_listen_init(srv); */
+        /* if (rc < 0) { */
+        /*         pepdna_work_stop(srv); */
+        /*         return rc; */
+        /* } */
+
+        /* nf_register_net_hooks(&init_net, pepdna_nf_ops, */
+        /*                 ARRAY_SIZE(pepdna_nf_ops)); */
+        return 0;
+}
+
+/*
+ * Start CCN-CCN task
+ * This function is called by pepdna_server_start() @'server.c'
+ * --------------------------------------------------------------------------*/
+static int pepdna_c2c_start(struct pepdna_server *srv)
+{
+	/* TODO: Not yet implemented! */
+        /* int rc = 0; */
+
+        /* INIT_WORK(&srv->accept_work, pepdna_acceptor_work); */
+
+        /* rc = pepdna_work_init(srv); */
+        /* if (rc < 0) */
+        /*         return rc; */
+
+        /* rc = pepdna_tcp_listen_init(srv); */
+        /* if (rc < 0) { */
+        /*         pepdna_work_stop(srv); */
+        /*         return rc; */
+        /* } */
+
+        /* nf_register_net_hooks(&init_net, pepdna_nf_ops, */
+        /*                 ARRAY_SIZE(pepdna_nf_ops)); */
+        return 0;
+}
+#endif
+
 static int init_pepdna_server(struct pepdna_server *srv)
 {
         pepdna_srv = srv;
@@ -542,7 +664,7 @@ int pepdna_server_start(void)
 {
         int rc = 0;
         struct pepdna_server *srv = kzalloc(sizeof(struct pepdna_server),
-                        GFP_ATOMIC);
+					    GFP_ATOMIC);
         if (!srv) {
                 pep_err("Couldn't allocate memory for pepdna_server");
                 return -ENOMEM;
@@ -571,6 +693,23 @@ int pepdna_server_start(void)
                         break;
                 case RINA2RINA:
                         rc = pepdna_r2r_start(srv);
+                        if (rc < 0)
+                                return rc;
+                        break;
+#endif
+#ifdef CONFIG_PEPDNA_CCN
+                case TCP2CCN:
+                        rc = pepdna_i2c_start(srv);
+                        if (rc < 0)
+                                return rc;
+                        break;
+                case CCN2TCP:
+                        rc = pepdna_c2i_start(srv);
+                        if (rc < 0)
+                                return rc;
+                        break;
+		case CCN2CCN:
+                        rc = pepdna_c2c_start(srv);
                         if (rc < 0)
                                 return rc;
                         break;
@@ -617,7 +756,7 @@ void pepdna_server_stop(void)
         /* 4. Flush and Destroy all works */
         pepdna_work_stop(pepdna_srv);
 
-        /* 5. Kfree PEPDNA server struct */
+        /* 5. kfree PEPDNA server struct */
         kfree(pepdna_srv);
         pepdna_srv = NULL;
 

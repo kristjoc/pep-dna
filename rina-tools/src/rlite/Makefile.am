@@ -27,7 +27,7 @@ noinst_LTLIBRARIES =				\
 BUILT_SOURCES = $(protoSOURCES)
 
 libiporina_la_SOURCES = 			\
-	$(protoSOURCES) 			\
+	$(protoSOURCES)
 libiporina_la_CPPFLAGS =			\
 	-I$(builddir)/..			\
 	-I$(srcdir)/..

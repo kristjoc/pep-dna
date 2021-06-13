@@ -21,7 +21,82 @@ static void sig_handler(int signum) {
 }
 int uflag = 0, dflag = 0;
 
-int main_client_fn(char *_url)
+static int main_ccn_client(char *_url)
+{
+    struct timespec start, end;
+    char host[32]      = {0};
+    char ip_addr[16]   = {0};
+    char file_name[32] = {0};
+    char header[1024]  = {0};
+    int  sock = 0, port = 80, rc = 0, rd = 0;
+
+    parse_url(_url, host, &port, file_name);
+
+    get_ip_addr(host, ip_addr);
+    if (strlen(ip_addr) == 0) {
+        fprintf(stderr, "Bad IP address!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    sprintf(header, "GET %s HTTP/1.1\r\n"\
+		    "Accept: */*\r\n"\
+		    "User-Agent: My Wget Client\r\n"\
+		    "Host: %s\r\n"\
+		    "Connection: Keep-Alive\r\n"\
+		    "\r\n"\
+	    , file_name, host);
+
+    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock < 0) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(ip_addr);
+    addr.sin_port = htons(port);
+
+    /* clients connects to the server and starts the timer */
+    clock_gettime(CLOCK_REALTIME, &start);
+    rc = connect(sock, (struct sockaddr *) &addr, sizeof(addr));
+    if (rc < 0) {
+        perror("connect");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+    set_blocking(sock, false);
+
+    /* client sends the GET/PUT header to the server */
+    rc = write(sock, header, strlen(header));
+    if (rc < 0) {
+        perror("write");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    rc = poll_fd(sock, POLL_READ, 1000);
+    if (rc <= 0) {
+        fprintf(stderr, "ERROR during poll()\n");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    rd = download(sock, file_name, 0);
+
+    shutdown(sock, SHUT_WR);
+    close(sock);
+
+    clock_gettime(CLOCK_REALTIME, &end);
+
+    if (rd > 0)
+        printf("%.4f\n", diff_time_ms(start, end));
+
+    return 0;
+}
+
+static int main_client_fn(char *_url)
 {
     struct timespec start, end;
     char host[32]      = {0};
@@ -157,7 +232,8 @@ int main_client_fn(char *_url)
 
     return 0;
 }
-int sock_srv_listen(int _port)
+
+static int sock_srv_listen(int _port)
 {
     struct sockaddr_in saddr;
     int sock = 0, opt = 1;
@@ -350,7 +426,7 @@ static void main_server_fn(int _port)
  ******************************************************************************/
 int main(int argc, char *argv[])
 {
-    int cflag = 0, sflag = 0;
+    bool cflag = false, sflag = false, icn_flag = false;
     struct sigaction sa;
     char url[64] = "127.0.0.1";
     int srvport = 80;
@@ -375,27 +451,45 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    while ((opt = getopt(argc, argv, "usc:dp:")) != -1) {
+    while ((opt = getopt(argc, argv, "i:usc:dp:")) != -1) {
         switch (opt) {
         case 's':
-            if (cflag == 1) {
+            if (cflag) {
                 fprintf(stderr, "%s can't run both as client & server\n",
                         argv[0]);
                 exit(EXIT_FAILURE);
             }
-            sflag = 1;
+            sflag = true;
             break;
         case 'c':
             if (strchr(optarg, '-') != NULL) {
                     fprintf(stderr, "[-c url] -- wrong option\n");
                     exit(EXIT_FAILURE);
                 }
-            if (sflag == 1) {
+            if (sflag) {
                 fprintf(stderr, "%s cannot run both as client and server\n",
                         argv[0]);
                 exit(EXIT_FAILURE);
             }
-            cflag = 1;
+            cflag = true;
+            if (strstr(optarg, "http"))
+                strcpy(url, optarg);
+            else {
+                fprintf(stderr, "URL should start with http\n");
+                exit(EXIT_FAILURE);
+            }
+            break;
+        case 'i':
+            if (strchr(optarg, '-') != NULL) {
+                    fprintf(stderr, "[-i url] -- wrong option\n");
+                    exit(EXIT_FAILURE);
+                }
+            if (sflag || cflag) {
+                fprintf(stderr, "%s cannot run as client/server in ICN mode\n",
+                        argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            icn_flag = true;
             if (strstr(optarg, "http"))
                 strcpy(url, optarg);
             else {
@@ -418,9 +512,10 @@ int main(int argc, char *argv[])
             break;
         default: /* '?' */
             fprintf(stderr, "Usage: %s\n"
+			    "[-i  url (ccn scenario)]\n"
                             "[-s] server\n"
-                            "[-c url]\n"
-                            "[-p server port]\n"
+                            "[-c  url]\n"
+                            "[-p  server port]\n"
                             "[-u] upload\n"
                             "[-d] download\n", argv[0]);
             exit(EXIT_FAILURE);
@@ -431,11 +526,13 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Expected argument after option %s\n", argv[optind]);
         exit(EXIT_FAILURE);
     }
-    if (!cflag && !sflag) {
-        fprintf(stderr, "Client or Server flag is mandatory!\n");
+    if (!cflag && !sflag && !icn_flag) {
+        fprintf(stderr, "No running mode selected!\n");
     }
 
-    if (cflag) {
+    if (icn_flag) {
+	main_ccn_client(url);
+    } else if (cflag) {
         if (!uflag && !dflag) {
             fprintf(stderr, "Download or Upload flag is mandatory!\n");
             exit(EXIT_FAILURE);

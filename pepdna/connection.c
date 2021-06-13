@@ -103,6 +103,25 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
                         /* INIT_WORK(&con->tcfa_work, pepdna_flow_alloc); */
                         break;
 #endif
+#ifdef CONFIG_PEPDNA_CCN
+                case TCP2CCN:
+                        INIT_WORK(&con->l2r_work, pepdna_con_i2c_work);
+                        INIT_WORK(&con->r2l_work, pepdna_con_ri2li_work);
+                        INIT_WORK(&con->tcfa_work, pepdna_tcp_connect);
+                        break;
+                case CCN2TCP:
+			/* TODO: Not supported yet! */
+                        /* INIT_WORK(&con->l2r_work, pepdna_con_i2r_work); */
+                        /* INIT_WORK(&con->r2l_work, pepdna_con_r2i_work); */
+                        /* INIT_WORK(&con->tcfa_work, pepdna_tcp_connect); */
+                        break;
+                case CCN2CCN:
+			/* TODO: Not supported yet*/
+                        /* INIT_WORK(&con->l2r_work, pepdna_con_rl2rr_work); */
+                        /* INIT_WORK(&con->r2l_work, pepdna_con_rr2rl_work); */
+                        /* INIT_WORK(&con->tcfa_work, pepdna_flow_alloc); */
+                        break;
+#endif
                 default:
                         pep_err("pepdna_mode undefined");
                         return NULL;
@@ -113,7 +132,6 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
         atomic_set(&con->port_id, port_id);
         con->flow = NULL;
 #endif
-
         con->server = pepdna_srv;
         con->server->idr_in_use++;
         con->lsock  = NULL;
