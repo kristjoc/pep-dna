@@ -138,7 +138,8 @@ poll_fd(int fd, int poll_mode, int timeout)
 /*
  *  SET SOCKET TO O_NONBLOCK
  */
-void set_blocking(int fd, bool blocking)
+static void
+set_blocking(int fd, bool blocking)
 {
     if (blocking) {
         if (fcntl(fd, F_SETFL, 0)) {
@@ -155,17 +156,40 @@ void set_blocking(int fd, bool blocking)
     }
 }
 
+/*
+ *  PARSE GET REQUEST
+ */
 static void
-main_loop(char *_uri, int _suite, uint32_t *_chunknum, char *_ux)
+parse_request(char *request, char *content)
+{
+    char *pos = strstr(request, "GET");
+    if (pos) {
+        sscanf(pos, "%*s %s", content);
+    }
+}
+
+static int
+frag_cb(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
+        unsigned char **data, int *len)
+{
+    (void)relay;
+    (void)from;
+    DEBUGMSG(INFO, "frag_cb\n");
+
+    memcpy(out, *data, *len);
+    outlen = *len;
+    return 0;
+}
+
+static void
+send_to_relay(char *_uri, int _suite, unsigned int _chunknum, char *_ux,
+	      int sock, struct sockaddr _sa, float _wait, int csock)
 {
     struct ccnl_buf_s *buf = NULL;
     int rc, socksize;
 
     struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(_uri, _suite,
 	    _chunknum == UINT_MAX ? NULL : &_chunknum);
-
-    DEBUGMSG(DEBUG, "prefix <%s><%s> became %s\n",
-            argv[optind], argv[optind+1], ccnl_prefix_to_path(prefix));
 
     for (int cnt = 0; cnt < 3; cnt++) {
         int32_t nonce = (int32_t) random();
@@ -199,7 +223,7 @@ main_loop(char *_uri, int _suite, uint32_t *_chunknum, char *_ux)
         } else {
             socksize = sizeof(struct sockaddr_in);
         }
-        rc = sendto(sock, buf->data, buf->datalen, 0, (struct sockaddr*)&sa, socksize);
+        rc = sendto(sock, buf->data, buf->datalen, 0, (struct sockaddr*)&_sa, socksize);
         if (rc < 0) {
             perror("sendto");
             myexit(1);
@@ -237,6 +261,7 @@ main_loop(char *_uri, int _suite, uint32_t *_chunknum, char *_ux)
             }
 
 #ifdef USE_FRAG
+	    ccnl_isFragmentFunc isFragment = ccnl_suite2isFragmentFunc(_suite);
             if (isFragment && isFragment(cp, len2)) {
                 int t;
                 int len3;
@@ -289,7 +314,8 @@ main_loop(char *_uri, int _suite, uint32_t *_chunknum, char *_ux)
                 DEBUGMSG(WARNING, "skipping non-data packet\n");
                 continue;
             }
-            write(1, out, len);
+	    //send back to PEP-DNA
+            write(csock, out, len);
             myexit(0);
         }
         if (cnt < 2)
@@ -299,113 +325,36 @@ main_loop(char *_uri, int _suite, uint32_t *_chunknum, char *_ux)
 
 done:
     close(sock);
-    myexit(-1);
-
 }
 
 static void
-handle_new_connection(int _sock)
+handle_new_connection(int csock, unsigned int _chunknum, char *_udp, int _suite,
+		      int sock, struct sockaddr _sa, char *_ux, float _wait);
 {
-    struct timespec start, end;
-    int sock = *(int *)data;
-    unsigned long file_size;
-    char response[256] = {0};
-    char file_name[32] = {0};
+    char content[32] = {0};
     char request[2048] = {0};
     int rc = 0;
 
-    clock_gettime(CLOCK_REALTIME, &start);
+    set_blocking(csock, false);
 
-    set_blocking(_sock, false);
-
-    rc = poll_fd(_sock, POLL_READ, 1000);
+    rc = poll_fd(csock, POLL_READ, 1000);
     if (rc <= 0) {
         perror("poll_fd(READ)");
-        close(_sock);
+        close(csock);
         return;
     }
 
-    rc = read(sock, request, 2048);
+    rc = read(csock, request, 2048);
     if (rc <= 0) {
         perror("read");
-        close(sock);
+        close(csock);
         return NULL;
     }
     request[rc] = '\0';
 
-    file_size = parse_request(request, file_name);
-    if (file_size > 0) {
-        sprintf(response, \
-                "HTTP/1.1 200 OK\n"\
-                "Content-length: %ld\n"\
-                "\r\n"\
-                ,file_size);
-    } else {
-        sprintf(response, \
-                "HTTP/1.1 404 Not Found\n"\
-                "Content-length: %ld\n"\
-                "\r\n"\
-                ,file_size);
-    }
+    parse_request(request, content);
 
-    rc = write(sock, response, strlen(response));
-    if (rc < 0) {
-        perror("write");
-        close(sock);
-        return NULL;
-    }
-
-    if (dflag) {
-        rc = poll_fd(sock, POLL_READ, 1000);
-        if (rc <= 0) {
-            perror("poll_fd(READ)");
-            close(sock);
-            return NULL;
-        }
-
-        rc = read(sock, response, 256);
-        if (rc <= 0) {
-            perror("read");
-            close(sock);
-            return NULL;
-        }
-
-        if (upload(sock, file_name, file_size) < 0) {
-           perror("upload");
-           close(sock);
-           return NULL;
-        }
-        rc = read(sock, response, 256);
-        if (rc <= 0) {
-            perror("read");
-            close(sock);
-            return NULL;
-        }
-
-        shutdown(sock, SHUT_RDWR);
-        close(sock);
-
-        clock_gettime(CLOCK_REALTIME, &end);
-
-        /* if (ru > 0) */
-        /*     fprintf(fp, "%.4f\n", diff_time_ms(start, end)); */
-        /* fclose(fp); */
-
-        return NULL;
-    } else if (uflag) {
-        if (download(sock, file_name, file_size) < 0) {
-            perror("download");
-            close(sock);
-            return NULL;
-        }
-        rc = write(sock, "DONE", 5);
-        if (rc < 0) {
-            perror("write");
-            close(sock);
-            return NULL;
-        }
-    }
-    return NULL;
+    send_to_relay(content, _suite, _chunknum, _ux, sock, _sa, wait, csock);
 }
 
 static int
@@ -446,19 +395,15 @@ sock_srv_listen(int _port)
 }
 
 static void
-main_server_fn(int _port, int _suite, char *_ux)
+main_server_fn(int _listen_port, unsigned int _chunknum, char *_udp, int _suite,
+	       char *_addr, int _port, char *_ux, float _wait)
 {
     struct sockaddr sa;
     struct sockaddr_in caddr;
     socklen_t clen = sizeof(caddr);
-    pthread_t th_id[MAX_CONNS];
-    int sock, csock, rc;
-    int th_nr = 0;
-#ifdef USE_FRAG
-    ccnl_isFragmentFunc isFragment = ccnl_suite2isFragmentFunc(_suite);
-#endif
+    int lsock, sock, csock, rc;
 
-    sock = sock_srv_listen(_port);
+    lsock = sock_srv_listen(_listen_port);
 
     if (_ux) { // use UNIX socket
         struct sockaddr_un *su = (struct sockaddr_un*) &sa;
@@ -468,44 +413,35 @@ main_server_fn(int _port, int _suite, char *_ux)
     } else { // UDP
         struct sockaddr_in *si = (struct sockaddr_in*) &sa;
         si->sin_family = PF_INET;
-        si->sin_addr.s_addr = inet_addr(addr);
-        si->sin_port = htons(port);
+        si->sin_addr.s_addr = inet_addr(_addr);
+        si->sin_port = htons(_port);
         sock = udp_open();
     }
 
     while (running) {
         /* wait for a connection request */
-        csock = accept(sock, (struct sockaddr *) &caddr, &clen);
+        csock = accept(lsock, (struct sockaddr *) &caddr, &clen);
         if (csock < 0) {
             perror("accept");
             running = 0;
             break;
         }
 
-
-}
-
-int
-frag_cb(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
-        unsigned char **data, int *len)
-{
-    (void)relay;
-    (void)from;
-    DEBUGMSG(INFO, "frag_cb\n");
-
-    memcpy(out, *data, *len);
-    outlen = *len;
-    return 0;
+	handle_new_connection(csock, _chunknum, _udp, _suite, sock, sa, _ux,
+			      _wait);
+    }
+    close(csock);
 }
 
 int
 main(int argc, char *argv[])
 {
-    int opt, rc, port, socksize, suite = CCNL_SUITE_NDNTLV;
+    int opt, rc, port, suite = CCNL_SUITE_NDNTLV;
     int listen_port = 8080;
     char *addr = NULL, *udp = NULL, *ux = NULL;
     float wait = 3.0;
     unsigned int chunknum = UINT_MAX;
+    struct sigaction sa;
     /* Set some signal handler */
     /* Ignore SIGPIPE
      * allow the server main thread to continue even after the client ^C */
@@ -524,7 +460,6 @@ main(int argc, char *argv[])
         perror("sigaction(SIGTERM)");
         exit(EXIT_FAILURE);
     }
-
 
     while ((opt = getopt(argc, argv, "hn:s:u:v:w:x:p:")) != -1) {
         switch (opt) {
@@ -592,9 +527,9 @@ usage:
     }
     DEBUGMSG(TRACE, "using udp address %s/%d\n", addr, port);
 
-    /* Here wait for tcp incoming connections from PEP-DNA */
+    /* Wait for tcp incoming connections from PEP-DNA */
     daemonize();
-    main_server_fn(listen_port, suite, w);
+    main_server_fn(listen_port, chunknum, udp, suite, addr, port, ux, wait);
 
     return 0; // avoid a compiler warning
 }
