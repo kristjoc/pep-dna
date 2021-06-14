@@ -3,11 +3,12 @@
 #
 
 KERNBUILDDIR=@KERNBUILDDIR@
-PEPDNADIR := /pep-dna
-KBUILD_EXTRA_SYMBOLS := $(PEPDNADIR)/kernel/Module.symvers
+RINADIR := ../rina-stack/
+PEPDNADIR := $(PWD)/kmodule/
+KBUILD_EXTRA_SYMBOLS := $(RINADIR)/kernel/Module.symvers
 
-ccflags-y += -I$(PEPDNADIR)/kernel/
-ccflags-y += -I$(PEPDNADIR)/include/
+ccflags-y += -I$(RINADIR)/kernel/
+ccflags-y += -I$(RINADIR)/include/
 ccflags-y += -Wtype-limits
 ifeq ($(CONFIG_PEPDNA_DEBUG),y)
 ccflags-y += -g -DDEBUG
@@ -25,7 +26,7 @@ endif
 ifeq ($(CONFIG_PEPDNA_UDP),y)
 ccflags-y += -DCONFIG_PEPDNA_UDP
 endif
-EXTRA_CFLAGS += -I$(PWD)/../include/
+EXTRA_CFLAGS += -I$(RINADIR)/include/
 
 obj-m += pepdna.o
 pepdna-y :=	core.o server.o connection.o hash.o \
@@ -37,16 +38,16 @@ pepdna-$(CONFIG_PEPDNA_RINA) += rina.o
 pepdna-$(CONFIG_SYSCTL) += sysctl.o
 
 all:
-	cp kfa/mykfa.h $(PEPDNADIR)/kernel/kfa.h
-	cp kfa/mykfa.c $(PEPDNADIR)/kernel/kfa.c
-	$(MAKE) -C $(KERNBUILDDIR) CONFIG_PEPDNA_RINA=@CONFIG_PEPDNA_RINA@ CONFIG_PEPDNA_CCN=@CONFIG_PEPDNA_CCN@ CONFIG_PEPDNA_UDP=@CONFIG_PEPDNA_UDP@ CONFIG_PEPDNA_DEBUG=@CONFIG_PEPDNA_DEBUG@ CONFIG_PEPDNA_LOCALHOST=@CONFIG_PEPDNA_LOCALHOST@ M=$(PWD) modules
-	cp kfa/kfa.h $(PEPDNADIR)/kernel/kfa.h
-	cp kfa/kfa.c $(PEPDNADIR)/kernel/kfa.c
+	cp kfa/mykfa.h $(RINADIR)/kernel/kfa.h
+	cp kfa/mykfa.c $(RINADIR)/kernel/kfa.c
+	$(MAKE) -C $(KERNBUILDDIR) CONFIG_PEPDNA_RINA=@CONFIG_PEPDNA_RINA@ CONFIG_PEPDNA_CCN=@CONFIG_PEPDNA_CCN@ CONFIG_PEPDNA_UDP=@CONFIG_PEPDNA_UDP@ CONFIG_PEPDNA_DEBUG=@CONFIG_PEPDNA_DEBUG@ CONFIG_PEPDNA_LOCALHOST=@CONFIG_PEPDNA_LOCALHOST@ M=$(PEPDNADIR) modules
+	cp kfa/kfa.h $(RINADIR)/kernel/kfa.h
+	cp kfa/kfa.c $(RINADIR)/kernel/kfa.c
 
 install:
-	$(MAKE) -C $(KERNBUILDDIR) M=$(PWD) modules_install
+	$(MAKE) -C $(KERNBUILDDIR) M=$(PEPDNADIR) modules_install
 	depmod -a
 clean:
-	$(MAKE) -C $(KERNBUILDDIR) M=$(PWD) clean
+	$(MAKE) -C $(KERNBUILDDIR) M=$(PEPDNADIR) clean
 uninstall:
 	rm -f /lib/modules/`uname -r`/extra/pepdna.ko

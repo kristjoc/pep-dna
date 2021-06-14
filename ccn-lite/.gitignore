@@ -1,0 +1,94 @@
+*~
+*.o
+*.a
+*.pyc
+
+# Linux kernel module:
+*.ko
+*.cmd
+*.mod.c
+*.mod.o
+.tmp_versions
+modules.order
+Module.symvers
+
+# Project files:
+
+# ccn-binaries
+src/ccn-lite-minimalrelay
+src/ccn-lite-relay
+src/ccn-lite-simu
+src/arduino/.build/*
+src/arduino/lib/.holder
+
+# util binaries
+src/util/ccn-lite-ccnb2xml
+src/util/ccn-lite-cryptoserver
+src/util/ccn-lite-ctrl
+src/util/ccn-lite-deF
+src/util/ccn-lite-localrpc
+src/util/ccn-lite-mkC
+src/util/ccn-lite-mkF
+src/util/ccn-lite-mkI
+src/util/ccn-lite-peek
+src/util/ccn-lite-peekcomputation
+src/util/ccn-lite-produce
+src/util/ccn-lite-fetch
+src/util/ccn-lite-pktdump
+src/util/ccn-lite-rpc
+src/util/ccn-lite-valid
+
+# unit tests
+test/unit/prefix-cmp
+test/unit/unit
+
+# bin files
+bin
+
+# output dirs
+lib/
+obj/
+build/
+bin/
+cmake-build-debug/
+
+# OSX:
+
+# contains debug symbols tables for Xcode
+*.dSYM
+.DS_Store
+
+# vim:
+*.swp
+tags
+
+# sublime:
+*.sublime-workspace
+*.sublime-project
+
+# Visual Studio Code
+.vscode
+browse.VC.db
+
+# XCode
+*.xcodeproj
+
+# IDEA
+.idea
+
+# Eclipse
+.cproject
+.project
+.settings
+
+# GNU Files
+GTAGS
+GRTAGS
+GPATH
+
+# distribution files:
+distribution/Debian/ccn-lite
+distribution/Debian/ccn-lite.deb
+distribution/RedHat/rpmbuild
+
+# eof

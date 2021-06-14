@@ -55,7 +55,7 @@ PEP-DNA is a Performance Enhancing Proxy designed specifically for Deploying new
 <!-- BUILD INSTRUCTIONS -->
 ## Build instructions
 
-We have tested PEP-DNA with Ubuntu 16.04, 18.04, Debian 8 and 9 with kernel versions between 4.1.x and 4.19.x. In order to run all the experiments described in the paper, PEP-DNA needs to be built with RINA support. RINA stack is available at https://github.com/IRATI/stack. We also include all the RINA kernel modules and libraries in this repository to facilitate the installation process.
+We have tested PEP-DNA with the current stable distribution of Ubuntu and Debian, with kernel versions between 4.1.x to 5.4.x. In order to run all the experiments described in the paper, PEP-DNA needs to be built with RINA and CCN support. RINA stack is available at https://github.com/IRATI/stack. We also include all the RINA kernel modules and libraries in this repository to facilitate the installation process.
 *Note* that a user with sudo privileges is required to load PEP-DNA and RINA kernel modules and to apply other commands.
 
 ### Prerequisites
@@ -76,20 +76,20 @@ Additional tools are required to configure Linux hosts, run the experiments and 
 
 ### Installation
 
-1. Clone the repository. We recommend to clone the repo in the root directory so that it matches the path used in the scripts.
+1. Clone the repository. We recommend to clone the repo in the home directory so that it matches the path used in the scripts.
    ```sh
-   cd /
+   cd ~
    git clone https://github.com//pep-dna.git
    ```
 2. Build and install RINA's kernel-space and user-space software
    ```sh
-   cd /pep-dna
+   cd ~/pep-dna/rina-stack
    sudo ./configure
    sudo make install
    ```
 3. Configure and install PEP-DNA
    ```sh
-   cd /pep-dna/pepdna
+   cd ~/pep-dna/pepdna
    sudo ./configure --with-rina --with-localhost
    sudo make all
    sudo make install
@@ -99,7 +99,7 @@ Additional tools are required to configure Linux hosts, run the experiments and 
    *Note* that building in debug mode will reduce the performance of the proxy and print detailed logging in the kern.log file. When PEP-DNA runs at the same host as the server, it needs to be configured with ```---with-localhost``` flag in order to enable full transpacency at this case (More details will be provided later). For our experiments, the commands above are sufficient.
 4. All the testing applications and scripts used to run the experiments, collect the results and plot the graphs are located in https://github.com/kr1stj0n/pep-dna/tree/main/pepdnapps . Run the following commands to install them to ```/usr/bin/```.
    ```sh
-   cd /pep-dna/pepdnapps
+   cd ~/pep-dna/pepdnapps
    sudo make all
    sudo make install
    ```
@@ -129,7 +129,7 @@ Contributions are what make the open source community such an amazing place to b
 <!-- LICENSE -->
 ## License
 
-Distributed under the GPL License. See `LICENSE` for more information.
+Distributed under the GPL License. See `LICENSE` in https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/ for more information.
 
 
 <!-- CONTACT -->
