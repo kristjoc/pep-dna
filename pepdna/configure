@@ -60,7 +60,8 @@ sed -i "s|@CONFIG_PEPDNA_CCN@|${CONFIG_PEPDNA_CCN}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_UDP@|${CONFIG_PEPDNA_UDP}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_DEBUG@|${CONFIG_PEPDNA_DEBUG}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_LOCALHOST@|${CONFIG_PEPDNA_LOCALHOST}|g" Makefile
+cp Makefile kmodule/Makefile
 
 echo "PEP-DNA configuration phase completed"
 echo "Run 'make all' to compile the module"
-echo "Run 'make install' to install the module"
+echo "Run 'sudo -E make install' to install the module"

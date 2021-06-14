@@ -38,11 +38,11 @@ pepdna-$(CONFIG_PEPDNA_RINA) += rina.o
 pepdna-$(CONFIG_SYSCTL) += sysctl.o
 
 all:
-	cp kfa/mykfa.h $(RINADIR)/kernel/kfa.h
-	cp kfa/mykfa.c $(RINADIR)/kernel/kfa.c
+	cp $(PEPDNADIR)/kfa/mykfa.h $(RINADIR)/kernel/kfa.h
+	cp $(PEPDNADIR)/kfa/mykfa.c $(RINADIR)/kernel/kfa.c
 	$(MAKE) -C $(KERNBUILDDIR) CONFIG_PEPDNA_RINA=@CONFIG_PEPDNA_RINA@ CONFIG_PEPDNA_CCN=@CONFIG_PEPDNA_CCN@ CONFIG_PEPDNA_UDP=@CONFIG_PEPDNA_UDP@ CONFIG_PEPDNA_DEBUG=@CONFIG_PEPDNA_DEBUG@ CONFIG_PEPDNA_LOCALHOST=@CONFIG_PEPDNA_LOCALHOST@ M=$(PEPDNADIR) modules
-	cp kfa/kfa.h $(RINADIR)/kernel/kfa.h
-	cp kfa/kfa.c $(RINADIR)/kernel/kfa.c
+	cp $(PEPDNADIR)/kfa/kfa.h $(RINADIR)/kernel/kfa.h
+	cp $(PEPDNADIR)/kfa/kfa.c $(RINADIR)/kernel/kfa.c
 
 install:
 	$(MAKE) -C $(KERNBUILDDIR) M=$(PEPDNADIR) modules_install
