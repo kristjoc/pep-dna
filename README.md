@@ -50,7 +50,7 @@
 <!-- INTRODUCTION -->
 ## Introduction
 
-PEP-DNA is a Performance Enhancing Proxy designed specifically for Deploying new Network Architectures. It is implemented in the Linux kernel and can be installed wherever a translation needs to occur between a new architecture and TCP/IP domains. PEP-DNA is currently able to interconnect a TCP connection with (i) another TCP connection, and (ii) the Recursive InterNetwork Architecture (Visit http://pouzinsociety.org to read more about RINA). This README file provides information on repeating and replicating the results of the paper. For more information on how to use PEP-DNA in different scenarios, check the Tutorials on the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages.
+PEP-DNA is a Performance Enhancing Proxy designed specifically for Deploying new Network Architectures. It is implemented in the Linux kernel and can be installed wherever a translation needs to occur between a new architecture and TCP/IP domains. PEP-DNA is currently able to interconnect a TCP connection with (i) another TCP connection, (ii) the Recursive InterNetwork Architecture (Visit http://pouzinsociety.org to read more about RINA), and (iii) a Content-Centric Networking domain (https://named-data.net/publications/van-ccn-bremen-description/). This README file provides information on repeating and replicating the results of the paper. For more information on how to use PEP-DNA in different scenarios, check the Tutorials on the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages.
 
 <!-- BUILD INSTRUCTIONS -->
 ## Build instructions
@@ -144,6 +144,7 @@ Project Link: [https://github.com/kr1stj0n/pep-dna](https://github.com/kr1stj0n/
 ## Acknowledgements
 
 * [RINA implementation for OS/Linux](https://github.com/IRATI/stack)
+* [CCN-lite: a lightweight implementation of the CCNx protocol and its variations](https://github.com/cn-uofbasel/ccn-lite)
 
 
 <!-- MARKDOWN LINKS & IMAGES -->

@@ -319,45 +319,6 @@ void pepdna_con_li2ri_work(struct work_struct *work)
         pepdna_con_put(con);
 }
 
-/*
- * TCP2TCP scenario
- * Forwarding from Left to Right INTERNET domain
- * ------------------------------------------------------------------------- */
-void pepdna_con_li2ri_work(struct work_struct *work)
-{
-        struct pepdna_con *con = container_of(work, struct pepdna_con, l2r_work);
-        int rc = 0;
-
-        while (lconnected(con)) {
-                if ((rc = pepdna_con_i2i_fwd(con->lsock, con->rsock)) <= 0) {
-                        if (rc == -EAGAIN) //FIXME Handle -EAGAIN flood
-                                break;
-                        pepdna_con_close(con);
-                        break;
-                }
-        }
-        pepdna_con_put(con);
-}
-
-/* pepdna_con_data_ready - interrupt callback indicating the socket has data
- * The queued work is launched into ?
- * ------------------------------------------------------------------------- */
-void pepdna_l2r_conn_data_ready(struct sock *sk)
-{
-        struct pepdna_con *con = NULL;
-
-        pep_debug("data ready on left side");
-        read_lock_bh(&sk->sk_callback_lock);
-        con = sk->sk_user_data;
-        if (lconnected(con)) {
-                pepdna_con_get(con);
-                if (!queue_work(con->server->l2r_wq, &con->l2r_work)) {
-                        pep_debug("l2r_work was already on a queue");
-                        pepdna_con_put(con);
-                }
-        }
-        read_unlock_bh(&sk->sk_callback_lock);
-}
 /* pepdna_con_data_ready - interrupt callback indicating the socket has data
  * The queued work is launched into ?
  * ------------------------------------------------------------------------- */
