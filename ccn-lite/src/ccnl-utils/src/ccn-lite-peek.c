@@ -50,7 +50,15 @@ int outlen;
 
 volatile sig_atomic_t running = 1;
 static void sig_handler(int signum) {
-    running = 0;
+    /* Elaborate more on this; for now we catch simple signals */
+    switch (signum) {
+	case SIGINT:
+	case SIGTERM:
+	    running = 0;
+	    break;
+	default:
+	    break;
+    }
 }
 
 /* Turn this program into a daemon process. */
@@ -168,6 +176,7 @@ parse_request(char *request, char *content)
     }
 }
 
+#ifdef USE_FRAG
 static int
 frag_cb(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         unsigned char **data, int *len)
@@ -180,13 +189,14 @@ frag_cb(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     outlen = *len;
     return 0;
 }
+#endif
 
 static void
 send_to_relay(char *_uri, int _suite, unsigned int _chunknum, char *_ux,
 	      int sock, struct sockaddr _sa, float _wait, int csock)
 {
     struct ccnl_buf_s *buf = NULL;
-    int rc, socksize;
+    int len, socksize;
 
     struct ccnl_prefix_s *prefix = ccnl_URItoPrefix(_uri, _suite,
 	    _chunknum == UINT_MAX ? NULL : &_chunknum);
@@ -237,7 +247,7 @@ send_to_relay(char *_uri, int _suite, unsigned int _chunknum, char *_ux,
             size_t len2;
             DEBUGMSG(TRACE, "  waiting for packet\n");
 
-            if (block_on_read(sock, wait) <= 0) { // timeout
+            if (block_on_read(sock, _wait) <= 0) { // timeout
                 break;
             }
             len = recv(sock, out, sizeof(out), 0);
@@ -255,8 +265,8 @@ send_to_relay(char *_uri, int _suite, unsigned int _chunknum, char *_ux,
             while (!ccnl_switch_dehead(&cp, &len2, &enc)) {
                 suite2 = ccnl_enc2suite(enc);
             }
-            if (suite2 != -1 && suite2 != suite) {
-                DEBUGMSG(DEBUG, "  unknown suite %d\n", suite);
+            if (suite2 != -1 && suite2 != _suite) {
+                DEBUGMSG(DEBUG, "  unknown suite %d\n", _suite);
                 continue;
             }
 
@@ -305,7 +315,7 @@ send_to_relay(char *_uri, int _suite, unsigned int _chunknum, char *_ux,
             close(fd);
         }
 */
-            rc = ccnl_isContent(out, len, suite);
+            rc = ccnl_isContent(out, len, _suite);
             if (rc < 0) {
                 DEBUGMSG(ERROR, "error when checking type of packet\n");
                 goto done;
@@ -328,8 +338,8 @@ done:
 }
 
 static void
-handle_new_connection(int csock, unsigned int _chunknum, char *_udp, int _suite,
-		      int sock, struct sockaddr _sa, char *_ux, float _wait);
+handle_new_connection(int csock, unsigned int _chunknum, int _suite, int sock,
+		      struct sockaddr _sa, char *_ux, float _wait)
 {
     char content[32] = {0};
     char request[2048] = {0};
@@ -348,13 +358,13 @@ handle_new_connection(int csock, unsigned int _chunknum, char *_udp, int _suite,
     if (rc <= 0) {
         perror("read");
         close(csock);
-        return NULL;
+        return;
     }
     request[rc] = '\0';
 
     parse_request(request, content);
 
-    send_to_relay(content, _suite, _chunknum, _ux, sock, _sa, wait, csock);
+    send_to_relay(content, _suite, _chunknum, _ux, sock, _sa, _wait, csock);
 }
 
 static int
@@ -395,20 +405,20 @@ sock_srv_listen(int _port)
 }
 
 static void
-main_server_fn(int _listen_port, unsigned int _chunknum, char *_udp, int _suite,
-	       char *_addr, int _port, char *_ux, float _wait)
+main_server_fn(int _listen_port, unsigned int _chunknum, int _suite, char *_addr,
+	       int _port, char *_ux, float _wait)
 {
     struct sockaddr sa;
     struct sockaddr_in caddr;
     socklen_t clen = sizeof(caddr);
-    int lsock, sock, csock, rc;
+    int lsock, sock, csock;
 
     lsock = sock_srv_listen(_listen_port);
 
     if (_ux) { // use UNIX socket
         struct sockaddr_un *su = (struct sockaddr_un*) &sa;
         su->sun_family = AF_UNIX;
-        strncpy(su->sun_path, ux, sizeof(su->sun_path));
+        strncpy(su->sun_path, _ux, sizeof(su->sun_path));
         sock = ux_open();
     } else { // UDP
         struct sockaddr_in *si = (struct sockaddr_in*) &sa;
@@ -427,8 +437,7 @@ main_server_fn(int _listen_port, unsigned int _chunknum, char *_udp, int _suite,
             break;
         }
 
-	handle_new_connection(csock, _chunknum, _udp, _suite, sock, sa, _ux,
-			      _wait);
+	handle_new_connection(csock, _chunknum, _suite, sock, sa, _ux, _wait);
     }
     close(csock);
 }
@@ -529,7 +538,7 @@ usage:
 
     /* Wait for tcp incoming connections from PEP-DNA */
     daemonize();
-    main_server_fn(listen_port, chunknum, udp, suite, addr, port, ux, wait);
+    main_server_fn(listen_port, chunknum, suite, addr, port, ux, wait);
 
     return 0; // avoid a compiler warning
 }
