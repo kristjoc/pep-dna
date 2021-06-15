@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/connection.h: Header file for PEP-DNA connection instance
+ *  pep-dna/pepdna/kmodule/connection.h: PEP-DNA connection instance header
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/utils.c: PEP-DNA related utilities
+ *  pep-dna/pepdna/kmodule/utils.c: PEP-DNA related utilities
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

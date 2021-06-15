@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/core.c: PEP-DNA core module
+ *  pep-dna/pepdna/kmodule/core.c: PEP-DNA core module
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
@@ -38,8 +38,8 @@ MODULE_PARM_DESC(mode,
 
 /* END of Module Parameters */
 
-int sysctl_pepdna_sock_rmem[3] __read_mostly;              /* min/default/max */
-int sysctl_pepdna_sock_wmem[3] __read_mostly;              /* min/default/max */
+int sysctl_pepdna_sock_rmem[3] __read_mostly;	    /* min/default/max */
+int sysctl_pepdna_sock_wmem[3] __read_mostly;	    /* min/default/max */
 
 static const char* get_mode_name(void)
 {
@@ -51,7 +51,7 @@ static const char* get_mode_name(void)
 		case 4:  return "RINA2RINA";
 		case 5:  return "CCN2TCP";
 		case 6:  return "CCN2CCN";
-		default: return "ERROR_MODE";
+		default: return "ERROR";
 	}
 }
 

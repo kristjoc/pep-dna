@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/core.h: PEP-DNA header with global declarations
+ *  pep-dna/pepdna/kmodule/core.h: PEP-DNA header with global declarations
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

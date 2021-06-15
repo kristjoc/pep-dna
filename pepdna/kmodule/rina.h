@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/rina.h: Header file for PEP-DNA RINA support
+ *  pep-dna/pepdna/kmodule/rina.h: Header file for PEP-DNA RINA support
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

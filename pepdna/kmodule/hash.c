@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/hash.c: PEP-DNA hash functions
+ *  pep-dna/pepdna/kmodule/hash.c: PEP-DNA hash functions
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

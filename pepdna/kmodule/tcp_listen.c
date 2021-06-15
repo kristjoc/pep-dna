@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/tcp_listen.c: PEP-DNA TCP listen()
+ *  pep-dna/pepdna/kmodule/tcp_listen.c: PEP-DNA TCP listen()
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

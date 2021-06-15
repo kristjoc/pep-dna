@@ -15,15 +15,15 @@ export env=$1
 export nnodes=$2
 
 if [ -z "$env" ]; then
-        echo "\$env is not set"
-        echo "Usage: bash main.sh 'env' 'nnodes'"
-        exit
+    echo "\$env is not set"
+    echo "Usage: bash main.sh 'env' 'nnodes'"
+    exit
 fi
 
 if [ -z "$nnodes" ]; then
-        echo "\$nnodes is not set"
-        echo "Usage: bash main.sh 'env' 'nnodes'"
-        exit
+    echo "\$nnodes is not set"
+    echo "Usage: bash main.sh 'env' 'nnodes'"
+    exit
 fi
 
 . run.sh

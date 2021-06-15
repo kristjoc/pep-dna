@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/utils.h: Header files for PEP-DNA TCP related utilities
+ *  pep-dna/pepdna/kmodule/utils.h: PEP-DNA TCP related utilities header
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
@@ -20,10 +20,10 @@
 #ifndef _PEPDNA_TCP_UTILS_H
 #define _PEPDNA_TCP_UTILS_H
 
-#include <linux/types.h> /* included for unsigned int     */
-#include <linux/net.h>   /* included for struct socket    */
-#include <linux/in.h>    /* included for struct in_addr   */
-#include <net/sock.h>    /* included for struct sock      */
+#include <linux/types.h>    /* included for unsigned int     */
+#include <linux/net.h>	    /* included for struct socket    */
+#include <linux/in.h>	    /* included for struct in_addr   */
+#include <net/sock.h>	    /* included for struct sock      */
 
 
 /* Socket receive buffer sizes */

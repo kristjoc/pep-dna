@@ -453,51 +453,51 @@ set_routes_mss() {
 # Calculate buffer size using BDP. (We keep this static for now)
 #----------------------------------------------------------------
 calculate_bufsize() {
-        # set TCP rcv/snd buffer size equal to BDP
-        # BDP = (bandwidth * 1000 * 1000 / 8) * (delay / 1000) = bandwidth * 250 * delay
-        local bandwidth=$1
-        local delay=$2
+    # set TCP rcv/snd buffer size equal to BDP
+    # BDP = (bandwidth * 1000 * 1000 / 8) * (delay / 1000) = bandwidth * 250 * delay
+    local bandwidth=$1
+    local delay=$2
 
-        if [ $delay != "0" ]; then
-                bs=$(echo "scale=2; $bandwidth * 500 * $delay * 2" | bc)
-        else
-                delay="1"
-                bs=$(echo "scale=2; $bandwidth * 500 * $delay" | bc)
-        fi
+    if [ $delay != "0" ]; then
+	bs=$(echo "scale=2; $bandwidth * 500 * $delay * 2" | bc)
+    else
+	delay="1"
+	bs=$(echo "scale=2; $bandwidth * 500 * $delay" | bc)
+    fi
 
-        global_bufsize=$bs
-        global_bufsize=8388608
+    global_bufsize=$bs
+    global_bufsize=8388608
 }
 
 #--------------------------------------------
 # Set cpufrew settings for up to 'proc' CPUs
 #--------------------------------------------
 set_cpufreq_scaling() {
-        local onoff=$1
-        local proc=$2
+    local onoff=$1
+    local proc=$2
 
-        if [ $nnodes == '2' ]; then
-                hosts=($client_gw_host $server_gw_host)
-        elif [ $nnodes == '3' ]; then
-                hosts=($client_host $client_gw_host $server_gw_host)
-        elif [ $nnodes == '4' ]; then
-                hosts=($client_host $client_gw_host $server_gw_host $server_gw_host)
-        else
-                echo "Number of nodes not supported"
-                return
-        fi
+    if [ $nnodes == '2' ]; then
+	hosts=($client_gw_host $server_gw_host)
+    elif [ $nnodes == '3' ]; then
+	hosts=($client_host $client_gw_host $server_gw_host)
+    elif [ $nnodes == '4' ]; then
+	hosts=($client_host $client_gw_host $server_gw_host $server_gw_host)
+    else
+	echo "Number of nodes not supported"
+	return
+    fi
 
-        for i in ${!hosts[@]}; do
-                if [ $onoff == "set" ]; then
-                        CMD='for i in $(seq 1 '${proc}'); do
-                                sudo cpufreq-set -c$i -r -g performance;
-                            done'
-                else
-                        CMD='for i in $(seq 1 '${proc}'); do
-                                sudo cpufreq-set -c$i -r -g powersave;
-                            done'
-                fi
-                ssh ${hosts[$i]} $CMD > /dev/null 2>&1
-        done
-        sleep 1
+    for i in ${!hosts[@]}; do
+	if [ $onoff == "set" ]; then
+	    CMD='for i in $(seq 1 '${proc}'); do
+		    sudo cpufreq-set -c$i -r -g performance;
+		done'
+	else
+	    CMD='for i in $(seq 1 '${proc}'); do
+		    sudo cpufreq-set -c$i -r -g powersave;
+		done'
+	fi
+	ssh ${hosts[$i]} $CMD > /dev/null 2>&1
+    done
+    sleep 1
 }

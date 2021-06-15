@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/server.c: PEP-DNA server infrastructure
+ *  pep-dna/pepdna/kmodule/server.c: PEP-DNA server infrastructure
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
@@ -290,7 +290,7 @@ void pepdna_con_ri2li_work(struct work_struct *work)
 
         while (rconnected(con)) {
                 if ((rc = pepdna_con_i2i_fwd(con->rsock, con->lsock)) <= 0) {
-                        if (rc == -EAGAIN) //FIXME Handle -EAGAIN flood
+                        if (rc == -EAGAIN) /* FIXME: Handle -EAGAIN flood */
                                 break;
                         pepdna_con_close(con);
                         break;
@@ -310,7 +310,7 @@ void pepdna_con_li2ri_work(struct work_struct *work)
 
         while (lconnected(con)) {
                 if ((rc = pepdna_con_i2i_fwd(con->lsock, con->rsock)) <= 0) {
-                        if (rc == -EAGAIN) //FIXME Handle -EAGAIN flood
+                        if (rc == -EAGAIN) /* FIXME: Handle -EAGAIN flood */
                                 break;
                         pepdna_con_close(con);
                         break;
@@ -374,15 +374,15 @@ static unsigned int pepdna_pre_hook(void *priv, struct sk_buff *skb,
                 tcph = tcp_hdr(skb);
                 /* Check for packets with ONLY SYN flag set */
                 if (tcph->syn == 1 && tcph->ack == 0 && tcph->rst == 0) {
-
-                        hash_id = pepdna_hash32_rjenkins1_2(iph->saddr, tcph->source);
+                        hash_id = pepdna_hash32_rjenkins1_2(iph->saddr,
+							    tcph->source);
 
                         con = pepdna_con_find(hash_id);
                         if (!con) {
                                 syn = (struct syn_tuple *)kzalloc(sizeof(struct syn_tuple),
                                                 GFP_ATOMIC);
                                 if (!syn) {
-                                        pep_err("kzalloc SYN -ENOMEM");
+                                        pep_err("kzalloc failed");
                                         return NF_DROP;
                                 }
                                 syn->saddr  = iph->saddr;

@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/sysctl.c: sysctl interface to PEPDNA subsystem
+ *  pep-dna/pepdna/kmodule/sysctl.c: sysctl interface to PEPDNA subsystem
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

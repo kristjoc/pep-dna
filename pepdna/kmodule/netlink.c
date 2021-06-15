@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/netlink.c: PEP-DNA Netlink code
+ *  pep-dna/pepdna/kmodule/netlink.c: PEP-DNA Netlink code
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

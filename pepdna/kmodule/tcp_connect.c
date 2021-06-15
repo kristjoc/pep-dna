@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/tcp_connet.c: PEP-DNA TCP connect()
+ *  pep-dna/pepdna/kmodule/tcp_connet.c: PEP-DNA TCP connect()
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
@@ -28,8 +28,8 @@
 #endif
 
 /*
- * TCP2TCP scenario | RINA2TCP scenario
- * Connect to TCP|RINA server after accepting the incoming connection
+ * TCP2TCP | RINA2TCP | TCP2TCP scenario
+ * Connect to TCP|RINA server or CCN relay upon accepting the connection
  * ------------------------------------------------------------------------- */
 void pepdna_tcp_connect(struct work_struct *work)
 {
@@ -62,7 +62,7 @@ void pepdna_tcp_connect(struct work_struct *work)
     daddr.sin_port        = con->tuple.dest;
 
     /* 3. Tune TCP and set socket options */
-    sock->sk->sk_reuse     = SK_CAN_REUSE;     /* #defined SK_CAN_REUSE  1*/
+    sock->sk->sk_reuse = SK_CAN_REUSE;     /* #defined SK_CAN_REUSE  1*/
     pepdna_set_bufsize(sock);
     pepdna_tcp_nonagle(sock);
     pepdna_tcp_nodelayedack(sock);
@@ -70,7 +70,7 @@ void pepdna_tcp_connect(struct work_struct *work)
      * address and TCP port in order to spoof client */
     pepdna_ip_transparent(sock);
     /* Mark the socket with 333 MARK. This is only used when PEPDNA is at the
-     * same host as the server */
+     * same host as the server or CCN relay */
 #ifdef CONFIG_PEPDNA_LOCALHOST
     pepdna_set_mark(sock, PEPDNA_SOCK_MARK);
 #endif
@@ -94,7 +94,7 @@ void pepdna_tcp_connect(struct work_struct *work)
     pep_debug("PEP-DNA rconnected to %s:%d",str_ip, ntohs(daddr.sin_port));
     kfree(str_ip);
 
-    if (con->server->mode == TCP2TCP) {
+    if (con->server->mode == TCP2TCP || con->server->mode == TCP2CCN) {
         /* Register callbacks for right socket */
         con->rsock = sock;
         sk = sock->sk;

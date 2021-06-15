@@ -5,7 +5,7 @@ all:
 	$(MAKE) -C $(APPS_PATH)httpapp/ all
 	$(MAKE) -C $(APPS_PATH)myhttping/ all
 	$(MAKE) -C $(APPS_PATH)tcprdr/ all
-	cp $(SCRIPTS_PATH)cpumemscripts/* /usr/bin/
+	sudo cp $(SCRIPTS_PATH)cpumemscripts/* /usr/bin/
 install:
 	$(MAKE) -C $(APPS_PATH)httpapp/ install
 	$(MAKE) -C $(APPS_PATH)myhttping/ install

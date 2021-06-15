@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/server.h: Header file for PEP-DNA server infrastructure
+ *  pep-dna/pepdna/kmodule/server.h: PEP-DNA server infrastructure header
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *

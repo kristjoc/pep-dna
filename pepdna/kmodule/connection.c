@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/connection.c: PEP-DNA connection instance
+ *  pep-dna/pepdna/kmodule/connection.c: PEP-DNA connection instance
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
@@ -105,7 +105,7 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
 #endif
 #ifdef CONFIG_PEPDNA_CCN
                 case TCP2CCN:
-                        INIT_WORK(&con->l2r_work, pepdna_con_i2c_work);
+                        INIT_WORK(&con->l2r_work, pepdna_con_li2ri_work);
                         INIT_WORK(&con->r2l_work, pepdna_con_ri2li_work);
                         INIT_WORK(&con->tcfa_work, pepdna_tcp_connect);
                         break;
@@ -146,7 +146,7 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
         hash_add(pepdna_srv->htable, &con->hlist, con->hash_conn_id);
 
         if (!queue_work(con->server->tcfa_wq, &con->tcfa_work)) {
-                pep_err("tcfa_work was already on a queue_work");
+                pep_err("tcfa_work already on a queue_work");
                 pepdna_con_put(con);
         }
 
@@ -210,7 +210,7 @@ void pepdna_con_put(struct pepdna_con *con)
         if (con)
                 kref_put(&con->kref, pepdna_con_kref_release);
         else
-                pep_err("FIX this immediately!!!");
+                pep_err("FIXME: This should never happen!");
 }
 
 /*

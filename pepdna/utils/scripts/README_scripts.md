@@ -26,9 +26,10 @@ The framework consists of 6 bash scripts:
 
 * 'run.sh' contains the setup of the different scenarios used in the paper.
    - TCP
-   - TCP - TCP (using PEPDNA)
-   - TCP - TCP (using a User-Space Proxy)
+   - TCP - TCP  (using PEPDNA)
+   - TCP - TCP  (using a User-Space Proxy)
    - TCP - RINA (using PEPDNA)
+   - TCP - CCN  (using PEPDNA)
 
 * 'main.sh' has the main functions that the user need to run. Enable or Disable an experiment
    by commenting or uncommenting a line in this file.

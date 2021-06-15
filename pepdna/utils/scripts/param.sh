@@ -31,51 +31,51 @@ global_delay="0"
 global_bufsize=0
 
 vmware_variables() {
-        # topology: client -- client_gateway -- server_gateway -- server
-        readonly client_host="client"
-        # readonly client_host="192.168.0.101"
-        readonly client_ip="10.10.10.102"
-        readonly client_iface="enp0s8"
+    # topology: client -- client_gateway -- server_gateway -- server
+    readonly client_host="client"
+    # readonly client_host="192.168.0.101"
+    readonly client_ip="10.10.10.102"
+    readonly client_iface="enp0s8"
 
-        readonly client_gw_host="lrt"
-        # readonly client_gw_host="192.168.0.102"
-        readonly client_gw_right_ip="10.10.20.101"
-        readonly client_gw_right_iface="enp0s9"
-        readonly client_gw_left_ip="10.10.10.101"
-        readonly client_gw_left_iface="enp0s8"
+    readonly client_gw_host="lrt"
+    # readonly client_gw_host="192.168.0.102"
+    readonly client_gw_right_ip="10.10.20.101"
+    readonly client_gw_right_iface="enp0s9"
+    readonly client_gw_left_ip="10.10.10.101"
+    readonly client_gw_left_iface="enp0s8"
 
-        readonly server_gw_host="rrt"
-        # readonly server_gw_host="192.168.0.103"
-        readonly server_gw_right_ip="10.10.30.101"
-        readonly server_gw_right_iface="enp0s9"
-        readonly server_gw_left_ip="10.10.20.102"
-        readonly server_gw_left_iface="enp0s8"
+    readonly server_gw_host="rrt"
+    # readonly server_gw_host="192.168.0.103"
+    readonly server_gw_right_ip="10.10.30.101"
+    readonly server_gw_right_iface="enp0s9"
+    readonly server_gw_left_ip="10.10.20.102"
+    readonly server_gw_left_iface="enp0s8"
 
-        readonly server_host="server"
-	# readonly server_host="192.168.0.104"
-	readonly server_ip="10.10.30.102"
-        readonly server_iface="enp0s8"
+    readonly server_host="server"
+    # readonly server_host="192.168.0.104"
+    readonly server_ip="10.10.30.102"
+    readonly server_iface="enp0s8"
 
-        readonly global_path="/home/kristjoc/"
+    readonly global_path="/home/kristjoc/"
 }
 
 testbed_variables() {
-        # Supported topology: hylia --- midna
-        readonly client_gw_host="hylia"
-        readonly client_left_ip="10.100.120.3"
-        readonly client_gw_left_iface="10Gd"
+    # Supported topology: hylia --- midna
+    readonly client_gw_host="hylia"
+    readonly client_left_ip="10.100.120.3"
+    readonly client_gw_left_iface="10Gd"
 
-	readonly server_gw_host="midna"
-	readonly server_gw_right_ip="10.100.120.6"
-        readonly server_gw_right_iface="10Gd"
+    readonly server_gw_host="midna"
+    readonly server_gw_right_ip="10.100.120.6"
+    readonly server_gw_right_iface="10Gd"
 
-        readonly global_path="/home/ocarina/kristjoc/"
+    readonly global_path="/home/ocarina/kristjoc/"
 }
 
 if [ $env == 'testbed' ]; then
-        testbed_variables
+    testbed_variables
 elif [ $env == 'vmware' ]; then
-        vmware_variables
+    vmware_variables
 else
-        echo "Bad env variable"
+    echo "Bad env variable"
 fi

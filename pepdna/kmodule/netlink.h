@@ -1,5 +1,5 @@
 /*
- *  rina/pepdna/netlink.h: Header file for PEP-DNA Netlink code
+ *  pep-dna/pepdna/kmodule/netlink.h: Header file for PEP-DNA Netlink code
  *
  *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
