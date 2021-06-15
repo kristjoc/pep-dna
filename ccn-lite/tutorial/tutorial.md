@@ -1,4 +1,4 @@
-# CCN-lite 
+# CCN-lite
 
 ## Table Of Contents:
 - [Introduction](#introduction)
@@ -9,7 +9,7 @@
 <a name="introduction"/>
 ## Introduction
 
-This tutorial explains and demonstrates three scenarios for 
+This tutorial explains and demonstrates three scenarios for
 Content-Centric-Networking (CCN) use cases.
 
 As of 2014, there exist mainly three different CCN implementations and packet

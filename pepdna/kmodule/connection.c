@@ -123,7 +123,7 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
                         break;
 #endif
                 default:
-                        pep_err("pepdna_mode undefined");
+                        pep_err("PEP-DNA mode undefined");
                         return NULL;
         }
 

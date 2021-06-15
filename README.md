@@ -48,7 +48,7 @@
 <!-- INTRODUCTION -->
 ## Introduction
 
-PEP-DNA is a Performance Enhancing Proxy designed specifically for Deploying new Network Architectures. It is implemented in the Linux kernel and can be installed wherever a translation needs to occur between a new architecture and TCP/IP domains. PEP-DNA is currently able to interconnect a TCP connection with (i) another TCP connection, (ii) the Recursive InterNetwork Architecture (Visit http://pouzinsociety.org to read more about RINA), and (iii) a Content-Centric Networking domain (https://named-data.net/publications/van-ccn-bremen-description/). This README file provides information on repeating and replicating the results of the paper. For more information on how to use PEP-DNA in different scenarios, check the Tutorials on the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages.
+PEP-DNA is a Performance Enhancing Proxy designed specifically for Deploying new Network Architectures. It is implemented in the Linux kernel and can be installed wherever a translation needs to occur between a new architecture and TCP/IP domains. PEP-DNA is currently able to interconnect a TCP connection with (i) another TCP connection, (ii) the Recursive InterNetwork Architecture (Visit http://pouzinsociety.org to read more about RINA), and (iii) a Content-Centric Networking domain (https://named-data.net/publications/van-ccn-bremen-description/). This `README.md` file provides information on repeating and replicating the results of the paper. For more information on how to use PEP-DNA in different scenarios, check the Tutorials on the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages.
 
 <!-- BUILD INSTRUCTIONS -->
 ## Build instructions
@@ -68,7 +68,7 @@ First, install the user-space dependencies which are required to build RINA.
    ```
 Next, use the following to install the requirements for CCN-lite:
    ```sh
-   sudo apt-get install cmake libssl-dev pkg-config && pkg-config libssl-dev libcmocka-dev
+   sudo apt-get install cmake libssl-dev pkg-config libssl-dev libcmocka-dev
    ```
 Install libnl-3-dev for Netlink sockets support.
    ```sh

@@ -187,18 +187,18 @@ load_pepdna() {
                 # Topology: client_gw_host --- server_gw_host
                 # Scenarios: TCP2TCP | TCP2RINA
                 if [[ $scenario == *"tcp2tcp"* ]]; then
-                        CMD="sudo modprobe pepdna port=$global_proxy_port pepdna_mode=0"
+                        CMD="sudo modprobe pepdna port=$global_proxy_port mode=0"
                 elif [[ $scenario == *"tcp2rina_"* ]]; then
-                        CMD="sudo modprobe pepdna port=$global_proxy_port pepdna_mode=1"
+                        CMD="sudo modprobe pepdna port=$global_proxy_port mode=1"
                 fi
                 ssh $server_gw_host $CMD
         elif [ $nnodes == '3' ]; then
                 # Topology: client_host --- client_gw_host --- server_gw_host
                 # Scenarios: TCP2TCP | TCP2RINA
                 if [[ $scenario == *"tcp2tcp"* ]]; then
-                        CMD="sudo modprobe pepdna port=$global_proxy_port pepdna_mode=0"
+                        CMD="sudo modprobe pepdna port=$global_proxy_port mode=0"
                 elif [[ $scenario == *"tcp2rina_"* ]]; then
-                        CMD="sudo modprobe pepdna port=$global_proxy_port pepdna_mode=1"
+                        CMD="sudo modprobe pepdna port=$global_proxy_port mode=1"
                 fi
                 ssh $client_gw_host $CMD
         elif [ $nnodes == '4' ]; then
@@ -207,9 +207,9 @@ load_pepdna() {
                 hosts=($client_gw_host $server_gw_host)
                 for i in ${!hosts[@]}; do
                         if [ ${hosts[$i]} == $server_gw_host ]; then
-                                CMD="sudo modprobe pepdna port=$global_proxy_port pepdna_mode=2"
+                                CMD="sudo modprobe pepdna port=$global_proxy_port mode=2"
                         else
-                                CMD="sudo modprobe pepdna port=$global_proxy_port pepdna_mode=1"
+                                CMD="sudo modprobe pepdna port=$global_proxy_port mode=1"
                         fi
                         ssh ${hosts[$i]} $CMD
                 done

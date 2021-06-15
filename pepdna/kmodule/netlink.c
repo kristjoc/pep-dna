@@ -27,9 +27,9 @@
 #include <net/netlink.h>
 #include <net/sock.h>
 
-extern int pepdna_mode; /* Declared in 'core.c' */
+extern int mode; /* Declared in 'core.c' */
 
-static enum server_mode mode __read_mostly;
+static enum server_mode pepdna_mode __read_mostly;
 static struct sock *nl_sock = NULL;
 static int nl_port_id       = -1;
 
@@ -47,7 +47,7 @@ static void pepdna_nl_recv_msg(struct sk_buff *skb)
                 nlh = nlmsg_hdr(skb);
                 data = NULL;
 
-                switch (mode) {
+                switch (pepdna_mode) {
 #ifdef CONFIG_PEPDNA_RINA
                 case TCP2RINA:
                         if (nl_port_id == -1) {
@@ -67,7 +67,7 @@ static void pepdna_nl_recv_msg(struct sk_buff *skb)
                         break;
 #endif
                 default:
-                        pep_err("pepdna_mode undefined");
+                        pep_debug("netlink not needed in this mode");
                         break;
                 }
         }
@@ -132,7 +132,7 @@ int pepdna_netlink_init(void)
         struct netlink_kernel_cfg cfg = {0};
 
         cfg.input = pepdna_nl_recv_msg;
-        mode      = pepdna_mode;
+        pepdna_mode = mode;
 
         nl_sock = netlink_kernel_create(&init_net, NL_PEPDNA_PROTO, &cfg);
         if (!nl_sock) {

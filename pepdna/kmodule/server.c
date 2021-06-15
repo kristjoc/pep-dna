@@ -36,7 +36,7 @@
 #include <linux/tcp.h>
 
 /* External variables */
-extern int pepdna_mode;
+extern int mode;
 extern int port;
 
 /* Global variables */
@@ -602,7 +602,7 @@ static int pepdna_c2c_start(struct pepdna_server *srv)
 static int init_pepdna_server(struct pepdna_server *srv)
 {
         pepdna_srv = srv;
-        srv->mode = pepdna_mode;
+        srv->mode  = mode;
 
         srv->listener  = NULL;
         srv->accept_wq = NULL;
@@ -676,7 +676,7 @@ int pepdna_server_start(void)
                         break;
 #endif
                 default:
-                        pep_err("pepdna_mode undefined");
+                        pep_err("PEP-DNA mode undefined");
                         return -EINVAL;
         }
 

@@ -31,9 +31,9 @@ int port = 0;
 module_param(port, int, 0644);
 MODULE_PARM_DESC(port, "TCP port for listen()");
 
-int pepdna_mode = -1;
-module_param(pepdna_mode, int, 0644);
-MODULE_PARM_DESC(pepdna_mode,
+int mode = -1;
+module_param(mode, int, 0644);
+MODULE_PARM_DESC(mode,
      "TCP2TCP | TCP2RINA | TCP2CCN | RINA2TCP | RINA2RINA | CCN2TCP | CCN2CCN");
 
 /* END of Module Parameters */
@@ -43,7 +43,7 @@ int sysctl_pepdna_sock_wmem[3] __read_mostly;              /* min/default/max */
 
 static const char* get_mode_name(void)
 {
-	switch (pepdna_mode) {
+	switch (mode) {
 		case 0:  return "TCP2TCP";
 		case 1:  return "TCP2RINA";
 		case 2:  return "TCP2CCN";
