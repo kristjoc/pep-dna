@@ -26,6 +26,10 @@
 #include "rina.h"
 #endif
 
+#ifdef CONFIG_PEPDNA_CCN
+#include "ccn.h"
+#endif
+
 #include <linux/sched.h>    /* included for wait_event_interruptible_timeout */
 #include <net/sock.h>       /* included for struct sock */
 
@@ -105,21 +109,19 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
 #endif
 #ifdef CONFIG_PEPDNA_CCN
                 case TCP2CCN:
-                        INIT_WORK(&con->l2r_work, pepdna_con_li2ri_work);
-                        INIT_WORK(&con->r2l_work, pepdna_con_ri2li_work);
-                        INIT_WORK(&con->tcfa_work, pepdna_tcp_connect);
+                        INIT_WORK(&con->l2r_work, pepdna_con_i2c_work);
+                        INIT_WORK(&con->r2l_work, pepdna_con_c2i_work);
+                        INIT_WORK(&con->tcfa_work, pepdna_udp_open);
                         break;
                 case CCN2TCP:
 			/* TODO: Not supported yet! */
-                        /* INIT_WORK(&con->l2r_work, pepdna_con_i2r_work); */
-                        /* INIT_WORK(&con->r2l_work, pepdna_con_r2i_work); */
-                        /* INIT_WORK(&con->tcfa_work, pepdna_tcp_connect); */
+                        /* INIT_WORK(&con->l2r_work, pepdna_con_c2i_work); */
+                        /* INIT_WORK(&con->r2l_work, pepdna_con_i2c_work); */
                         break;
                 case CCN2CCN:
 			/* TODO: Not supported yet*/
-                        /* INIT_WORK(&con->l2r_work, pepdna_con_rl2rr_work); */
-                        /* INIT_WORK(&con->r2l_work, pepdna_con_rr2rl_work); */
-                        /* INIT_WORK(&con->tcfa_work, pepdna_flow_alloc); */
+                        /* INIT_WORK(&con->l2r_work, pepdna_con_lc2rc_work); */
+                        /* INIT_WORK(&con->r2l_work, pepdna_con_rc2lc_work); */
                         break;
 #endif
                 default:
@@ -145,10 +147,10 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
         INIT_HLIST_NODE(&con->hlist);
         hash_add(pepdna_srv->htable, &con->hlist, con->hash_conn_id);
 
-        if (!queue_work(con->server->tcfa_wq, &con->tcfa_work)) {
-                pep_err("tcfa_work already on a queue_work");
-                pepdna_con_put(con);
-        }
+	if (!queue_work(con->server->tcfa_wq, &con->tcfa_work)) {
+		pep_err("tcfa_work already on a queue_work");
+		pepdna_con_put(con);
+	}
 
         return con;
 }

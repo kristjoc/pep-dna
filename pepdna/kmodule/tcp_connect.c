@@ -28,8 +28,8 @@
 #endif
 
 /*
- * TCP2TCP | RINA2TCP | TCP2TCP scenario
- * Connect to TCP|RINA server or CCN relay upon accepting the connection
+ * TCP2TCP | RINA2TCP  scenario
+ * Connect to TCP|RINA server upon accepting the connection
  * ------------------------------------------------------------------------- */
 void pepdna_tcp_connect(struct work_struct *work)
 {
@@ -94,7 +94,7 @@ void pepdna_tcp_connect(struct work_struct *work)
     pep_debug("PEP-DNA rconnected to %s:%d",str_ip, ntohs(daddr.sin_port));
     kfree(str_ip);
 
-    if (con->server->mode == TCP2TCP || con->server->mode == TCP2CCN) {
+    if (con->server->mode == TCP2TCP) {
         /* Register callbacks for right socket */
         con->rsock = sock;
         sk = sock->sk;

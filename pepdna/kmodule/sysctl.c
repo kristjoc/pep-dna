@@ -23,22 +23,22 @@
 
 static struct ctl_table_header *pepdna_ctl_hdr;
 
-static struct ctl_table pepdna_table[] = {
-        {
-                .procname     = "pepdna_sock_rmem",
-                .data	      = &sysctl_pepdna_sock_rmem,
-                .maxlen	      = sizeof(sysctl_pepdna_sock_rmem),
-                .mode	      = 0644,
-                .proc_handler = proc_dointvec,
-        },
-        {
-                .procname     = "pepdna_sock_wmem",
-                .data	      = &sysctl_pepdna_sock_wmem,
-                .maxlen	      = sizeof(sysctl_pepdna_sock_wmem),
-                .mode	      = 0644,
-                .proc_handler = proc_dointvec,
-        },
-        {}
+static struct ctl_table table[] = {
+	{
+		.procname     = "pepdna_sock_rmem",
+		.data	      = &sysctl_pepdna_sock_rmem,
+		.maxlen	      = sizeof(sysctl_pepdna_sock_rmem),
+		.mode	      = 0644,
+		.proc_handler = proc_dointvec,
+	},
+	{
+		.procname     = "pepdna_sock_wmem",
+		.data	      = &sysctl_pepdna_sock_wmem,
+		.maxlen	      = sizeof(sysctl_pepdna_sock_wmem),
+		.mode	      = 0644,
+		.proc_handler = proc_dointvec,
+	},
+	{}
 };
 
 /*
@@ -47,12 +47,11 @@ static struct ctl_table pepdna_table[] = {
  * ---------------------------------------------------------------------------*/
 int pepdna_register_sysctl(void)
 {
-        pepdna_ctl_hdr = register_net_sysctl(&init_net, "net/pepdna",
-                                             pepdna_table);
-        if (pepdna_ctl_hdr == NULL)
-                return -ENOMEM;
+	pepdna_ctl_hdr = register_net_sysctl(&init_net, "net/pepdna", table);
+	if (pepdna_ctl_hdr == NULL)
+		return -ENOMEM;
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -61,5 +60,5 @@ int pepdna_register_sysctl(void)
  * ---------------------------------------------------------------------------*/
 void pepdna_unregister_sysctl(void)
 {
-        unregister_net_sysctl_table(pepdna_ctl_hdr);
+	unregister_net_sysctl_table(pepdna_ctl_hdr);
 }

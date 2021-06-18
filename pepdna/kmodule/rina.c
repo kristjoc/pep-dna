@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
+#ifdef CONFIG_PEPDNA_RINA
 #include "rina.h"
 #include "core.h"
 #include "connection.h"
@@ -41,17 +41,14 @@ bool flow_is_ok(struct ipcp_flow *flow)
                 //pep_debug("Flow is NULL");
                 return false; /* Flow is NULL */
         }
-
         if (flow && flow->state < 0) { /* flow->state not valid */
                 //pep_debug("Flow state invalid");
                 return false;
         }
-
         if (flow && !flow->wqs) {
                 //pep_debug("Flow wqs are NULL");
                 return false; /* Flow waitqueues are NULL */
         }
-
         if (flow->state == PORT_STATE_ALLOCATED || flow->state == PORT_STATE_DISABLED) {
                 //pep_debug("Flow ALLOCATED | DISABLED");
                 return true;
@@ -72,7 +69,6 @@ bool queue_is_ready(struct ipcp_flow *flow)
                 if (!rfifo_is_empty(flow->sdu_ready))
                         return true;
         }
-
         return false;
 }
 
@@ -291,3 +287,134 @@ int pepdna_con_i2r_fwd(struct pepdna_con *con)
     kfree(buffer);
     return rc;
 }
+
+/*
+ * Netlink callback for RINA2TCP mode
+ * ------------------------------------------------------------------------- */
+void nl_r2i_callback(struct nl_msg *nlmsg)
+{
+        struct pepdna_con *con = NULL;
+        struct syn_tuple *syn  = NULL;
+
+        pep_debug("r2_icallback is being called");
+        if (nlmsg->alloc) {
+                syn = (struct syn_tuple *)kzalloc(sizeof(struct syn_tuple),
+                                GFP_ATOMIC);
+                if (IS_ERR(syn)) {
+                        pep_err("kzalloc");
+                        return;
+                }
+                syn->saddr  = cpu_to_be32(nlmsg->saddr);
+                syn->source = cpu_to_be16(nlmsg->source);
+                syn->daddr  = cpu_to_be32(nlmsg->daddr);
+                syn->dest   = cpu_to_be16(nlmsg->dest);
+
+                con = pepdna_con_alloc(syn, NULL, nlmsg->port_id);
+                if (!con)
+                        pep_err("pepdna_con_alloc");
+
+                kfree(syn);
+                pep_debug("r2i_callback terminated");
+        } else {
+                con = pepdna_con_find(nlmsg->hash_conn_id);
+                if (!con) {
+                        pep_err("Connection was removed from Hash Table");
+                        return;
+                }
+                if (flow_is_ready(con)) {
+                        /* At this point, right TCP connection is established
+                         * and RINA flow is allocated. Queue r2i_work now!
+                         */
+                        atomic_set(&con->rflag, 1);
+                        atomic_set(&con->lflag, 1);
+                        if (!queue_work(con->server->r2l_wq, &con->r2l_work)) {
+                                pep_err("r2i_work was already on a queue");
+                                pepdna_con_put(con);
+                                return;
+                        }
+                        /* Wake up 'left' socket */
+                        con->lsock->sk->sk_data_ready(con->lsock->sk);
+                }
+        }
+        pep_debug("r2i_callback terminated");
+}
+
+/*
+ * Netlink callback for TCP2RINA mode
+ * ------------------------------------------------------------------------- */
+void nl_i2r_callback(struct nl_msg *nlmsg)
+{
+        struct pepdna_con *con = pepdna_con_find(nlmsg->hash_conn_id);
+        if (!con) {
+                pep_err("Connection not found in Hash Table");
+                return;
+        }
+        atomic_set(&con->port_id, nlmsg->port_id);
+
+        /* At this point, RINA flow is allocated and con->flow is set by
+         * flow_is_ready() function. Reinject SYN back to the stack so that
+         * the left TCP connection can be established. There is no need to set
+         * callbacks here for the left socket as pepdna_tcp_accept() will take
+         * care of it.
+         */
+
+        if (flow_is_ready(con)) {
+                atomic_set(&con->rflag, 1);
+                netif_receive_skb(con->skb);
+        }
+
+        pep_debug("i2r_callback terminated");
+}
+
+/*
+ * TCP2RINA
+ * Forward traffic from INTERNET to RINA
+ * ------------------------------------------------------------------------- */
+void pepdna_con_i2r_work(struct work_struct *work)
+{
+        struct pepdna_con *con = container_of(work, struct pepdna_con, l2r_work);
+        int rc = 0;
+
+        while (lconnected(con)) {
+                if ((rc = pepdna_con_i2r_fwd(con)) <= 0) {
+                        if (rc == -EAGAIN) //FIXME Handle -EAGAIN flood
+                                break;
+
+                        /* Tell fallocator in userspace to dealloc. the flow */
+                        rc = pepdna_nl_sendmsg(0, 0, 0, 0, con->hash_conn_id,
+                                        atomic_read(&con->port_id), 0);
+                        if (rc < 0)
+                                pep_err("Couldn't notify fallocator to dealloc"
+                                                " the flow");
+                        pepdna_con_close(con);
+                        break;
+                }
+        }
+        pepdna_con_put(con);
+}
+
+/*
+ * RINA2TCP
+ * Forward traffic from RINA to INTERNET
+ * ------------------------------------------------------------------------- */
+void pepdna_con_r2i_work(struct work_struct *work)
+{
+        struct pepdna_con *con = container_of(work, struct pepdna_con, r2l_work);
+        int rc = 0;
+
+        pepdna_con_get(con);
+        while (rconnected(con)) {
+                if ((rc = pepdna_con_r2i_fwd(con)) <= 0) {
+                        if (rc == -EAGAIN) {
+                                pep_debug("Flow is not readable %d", rc);
+                                cond_resched();
+                        } else {
+                                atomic_set(&con->rflag, 0);
+                                pepdna_con_close(con);
+                                break;
+                        }
+                }
+        }
+        pepdna_con_put(con);
+}
+#endif

@@ -17,16 +17,20 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "server.h"
 #include "core.h"
-#include "connection.h"
+#include "server.h"
 #include "tcp.h"
+#include "connection.h"
 #include "tcp_utils.h"
-#include "hash.h"
 #include "netlink.h"
+#include "hash.h"
 
 #ifdef CONFIG_PEPDNA_RINA
 #include "rina.h"
+#endif
+
+#ifdef CONFIG_PEPDNA_CCN
+#include "ccn.h"
 #endif
 
 #include <linux/kthread.h>
@@ -87,11 +91,11 @@ int pepdna_work_init(struct pepdna_server *srv)
         }
         srv->accept_wq = wq;
 
-        if (srv->mode < 4) { /* First four enum PEPDNA modes */
+        if (srv->mode < 4) {	    /* TCP2TCP,TCP2RINA, TCP2CCN, RINA2TCP */
                 wq = alloc_workqueue("connect_alloc_wq", WQ_HIGHPRI|WQ_UNBOUND,
                                 max_active);
                 if (!wq) {
-                        pep_err("Couldn't alloc pepdna tcp_connect/flow_alloc_workqueue");
+                        pep_err("Couldn't alloc pepdna tc/fa workqueue");
                         goto free_tcfa_wq;
                 }
                 srv->tcfa_wq = wq;
@@ -146,138 +150,6 @@ void pepdna_work_stop(struct pepdna_server *srv)
                 srv->l2r_wq = NULL;
         }
 }
-
-/*
- * Netlink callback for RINA2TCP mode
- * ------------------------------------------------------------------------- */
-#ifdef CONFIG_PEPDNA_RINA
-void nl_r2i_callback(struct nl_msg *nlmsg)
-{
-        struct pepdna_con *con = NULL;
-        struct syn_tuple *syn  = NULL;
-
-        pep_debug("r2_icallback is being called");
-        if (nlmsg->alloc) {
-                syn = (struct syn_tuple *)kzalloc(sizeof(struct syn_tuple),
-                                GFP_ATOMIC);
-                if (IS_ERR(syn)) {
-                        pep_err("kzalloc");
-                        return;
-                }
-                syn->saddr  = cpu_to_be32(nlmsg->saddr);
-                syn->source = cpu_to_be16(nlmsg->source);
-                syn->daddr  = cpu_to_be32(nlmsg->daddr);
-                syn->dest   = cpu_to_be16(nlmsg->dest);
-
-                con = pepdna_con_alloc(syn, NULL, nlmsg->port_id);
-                if (!con)
-                        pep_err("pepdna_con_alloc");
-
-                kfree(syn);
-                pep_debug("r2i_callback terminated");
-        } else {
-                con = pepdna_con_find(nlmsg->hash_conn_id);
-                if (!con) {
-                        pep_err("Connection was removed from Hash Table");
-                        return;
-                }
-                if (flow_is_ready(con)) {
-                        /* At this point, right TCP connection is established
-                         * and RINA flow is allocated. Queue r2i_work now!
-                         */
-                        atomic_set(&con->rflag, 1);
-                        atomic_set(&con->lflag, 1);
-                        if (!queue_work(con->server->r2l_wq, &con->r2l_work)) {
-                                pep_err("r2i_work was already on a queue");
-                                pepdna_con_put(con);
-                                return;
-                        }
-                        /* Wake up 'left' socket */
-                        con->lsock->sk->sk_data_ready(con->lsock->sk);
-                }
-        }
-        pep_debug("r2i_callback terminated");
-}
-
-/*
- * Netlink callback for TCP2RINA mode
- * ------------------------------------------------------------------------- */
-void nl_i2r_callback(struct nl_msg *nlmsg)
-{
-        struct pepdna_con *con = pepdna_con_find(nlmsg->hash_conn_id);
-        if (!con) {
-                pep_err("Connection not found in Hash Table");
-                return;
-        }
-        atomic_set(&con->port_id, nlmsg->port_id);
-
-        /* At this point, RINA flow is allocated and con->flow is set by
-         * flow_is_ready() function. Reinject SYN back to the stack so that
-         * the left TCP connection can be established. There is no need to set
-         * callbacks here for the left socket as pepdna_tcp_accept() will take
-         * care of it.
-         */
-
-        if (flow_is_ready(con)) {
-                atomic_set(&con->rflag, 1);
-                netif_receive_skb(con->skb);
-        }
-
-        pep_debug("i2r_callback terminated");
-}
-
-/*
- * TCP2RINA
- * Forward traffic from INTERNET to RINA
- * ------------------------------------------------------------------------- */
-void pepdna_con_i2r_work(struct work_struct *work)
-{
-        struct pepdna_con *con = container_of(work, struct pepdna_con, l2r_work);
-        int rc = 0;
-
-        while (lconnected(con)) {
-                if ((rc = pepdna_con_i2r_fwd(con)) <= 0) {
-                        if (rc == -EAGAIN) //FIXME Handle -EAGAIN flood
-                                break;
-
-                        /* Tell fallocator in userspace to dealloc. the flow */
-                        rc = pepdna_nl_sendmsg(0, 0, 0, 0, con->hash_conn_id,
-                                        atomic_read(&con->port_id), 0);
-                        if (rc < 0)
-                                pep_err("Couldn't notify fallocator to dealloc"
-                                                " the flow");
-                        pepdna_con_close(con);
-                        break;
-                }
-        }
-        pepdna_con_put(con);
-}
-
-/*
- * RINA2TCP
- * Forward traffic from RINA to INTERNET
- * ------------------------------------------------------------------------- */
-void pepdna_con_r2i_work(struct work_struct *work)
-{
-        struct pepdna_con *con = container_of(work, struct pepdna_con, r2l_work);
-        int rc = 0;
-
-        pepdna_con_get(con);
-        while (rconnected(con)) {
-                if ((rc = pepdna_con_r2i_fwd(con)) <= 0) {
-                        if (rc == -EAGAIN) {
-                                pep_debug("Flow is not readable %d", rc);
-                                cond_resched();
-                        } else {
-                                atomic_set(&con->rflag, 0);
-                                pepdna_con_close(con);
-                                break;
-                        }
-                }
-        }
-        pepdna_con_put(con);
-}
-#endif
 
 /*
  * TCP2TCP scenario
@@ -379,8 +251,9 @@ static unsigned int pepdna_pre_hook(void *priv, struct sk_buff *skb,
 
                         con = pepdna_con_find(hash_id);
                         if (!con) {
-                                syn = (struct syn_tuple *)kzalloc(sizeof(struct syn_tuple),
-                                                GFP_ATOMIC);
+                                syn = (struct syn_tuple *)kzalloc(sizeof(
+							    struct syn_tuple),
+							    GFP_ATOMIC);
                                 if (!syn) {
                                         pep_err("kzalloc failed");
                                         return NF_DROP;
@@ -694,7 +567,7 @@ void pepdna_server_stop(void)
         struct hlist_node *n;
 
         /* 1. First, we unregister NF_HOOK to stop processing new SYNs */
-        if (pepdna_srv->mode < 2)
+        if (pepdna_srv->mode < 3)
                 nf_unregister_net_hooks(&init_net, pepdna_nf_ops,
                                 ARRAY_SIZE(pepdna_nf_ops));
 

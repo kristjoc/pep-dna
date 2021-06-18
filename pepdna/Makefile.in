@@ -3,12 +3,10 @@
 #
 
 KERNBUILDDIR=@KERNBUILDDIR@
-RINADIR := ../rina-stack/
+RINADIR := $(HOME)/pep-dna/rina-stack
+CCNDIR := $(HOME)/pep-dna/ccn-lite
 PEPDNADIR := $(PWD)/kmodule/
-KBUILD_EXTRA_SYMBOLS := $(RINADIR)/kernel/Module.symvers
 
-ccflags-y += -I$(RINADIR)/kernel/
-ccflags-y += -I$(RINADIR)/include/
 ccflags-y += -Wtype-limits
 ifeq ($(CONFIG_PEPDNA_DEBUG),y)
 ccflags-y += -g -DDEBUG
@@ -18,22 +16,33 @@ ifeq ($(CONFIG_PEPDNA_LOCALHOST),y)
 ccflags-y += -DCONFIG_PEPDNA_LOCALHOST
 endif
 ifeq ($(CONFIG_PEPDNA_RINA),y)
+KBUILD_EXTRA_SYMBOLS := $(RINADIR)/kernel/Module.symvers
 ccflags-y += -DCONFIG_PEPDNA_RINA
+ccflags-y += -I$(RINADIR)/kernel/
+ccflags-y += -I$(RINADIR)/include/
+EXTRA_CFLAGS += -I$(RINADIR)/include/
 endif
 ifeq ($(CONFIG_PEPDNA_CCN),y)
 ccflags-y += -DCONFIG_PEPDNA_CCN
+ccflags-y += -DCCNL_LINUXKERNEL
+ccflags-y += -DUSE_SUITE_NDNTLV
+ccflags-y += -DNEEDS_PACKET_CRAFTING
+ccflags-y += -I$(CCNDIR)/src/ccnl-core/include
+ccflags-y += -I$(CCNDIR)/src/ccnl-fwd/include
+ccflags-y += -I$(CCNDIR)/src/ccnl-pkt/include
 endif
 ifeq ($(CONFIG_PEPDNA_UDP),y)
 ccflags-y += -DCONFIG_PEPDNA_UDP
 endif
-EXTRA_CFLAGS += -I$(RINADIR)/include/
 
 obj-m += pepdna.o
-pepdna-y :=	core.o server.o connection.o hash.o \
-		netlink.o tcp.o tcp_listen.o tcp_connect.o \
+pepdna-y :=	core.o server.o connection.o netlink.o \
+		tcp.o tcp_listen.o tcp_connect.o hash.o \
 		tcp_utils.o
 
 pepdna-$(CONFIG_PEPDNA_RINA) += rina.o
+
+pepdna-$(CONFIG_PEPDNA_CCN) += ccn.o
 
 pepdna-$(CONFIG_SYSCTL) += sysctl.o
 

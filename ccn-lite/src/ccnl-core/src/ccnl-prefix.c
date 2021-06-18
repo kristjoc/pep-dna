@@ -36,9 +36,12 @@
 #include "../../ccnl-pkt/include/ccnl-pkt-ndntlv.h"
 #include "../../ccnl-pkt/include/ccnl-pkt-ccntlv.h"
 
+#include <linux/slab.h>
+#include <linux/ctype.h>
+
 #endif //CCNL_LINUXKERNEL
 
-
+#ifndef CCNL_LINUXKERNEL
 struct ccnl_prefix_s*
 ccnl_prefix_new(char suite, uint32_t cnt)
 {
@@ -60,7 +63,38 @@ ccnl_prefix_new(char suite, uint32_t cnt)
 
     return p;
 }
+#endif
 
+#ifdef CCNL_LINUXKERNEL
+struct ccnl_prefix_s*
+ccnl_prefix_newK(char suite, uint32_t cnt)
+{
+    struct ccnl_prefix_s *p;
+
+    p = (struct ccnl_prefix_s *) kcalloc(1, sizeof(struct ccnl_prefix_s), GFP_ATOMIC);
+    if (!p){
+        return NULL;
+    }
+    p->comp = (uint8_t **) kmalloc(cnt * sizeof(uint8_t*), GFP_ATOMIC);
+    p->complen = (size_t *) kmalloc(cnt * sizeof(size_t), GFP_ATOMIC);
+    if (!p->comp || !p->complen) {
+        kfree(p->bytes);
+        kfree(p->comp);
+        kfree(p->complen);
+        kfree(p->chunknum);
+	kfree(p);
+
+        return NULL;
+    }
+    p->compcnt = cnt;
+    p->suite = suite;
+    p->chunknum = NULL;
+
+    return p;
+}
+#endif
+
+#ifndef CCNL_LINUXKERNEL
 void
 ccnl_prefix_free(struct ccnl_prefix_s *p)
 {
@@ -240,6 +274,7 @@ ccnl_prefix_addChunkNum(struct ccnl_prefix_s *prefix, uint32_t chunknum)
 
     return 0;
 }
+#endif
 
 // TODO: move to a util file?
 uint8_t
@@ -272,6 +307,7 @@ unescape_component(char *comp)
     return len;
 }
 
+#ifndef CCNL_LINUXKERNEL
 uint32_t
 ccnl_URItoComponents(char **compVector, size_t *compLens, char *uri)
 {
@@ -303,7 +339,43 @@ ccnl_URItoComponents(char **compVector, size_t *compLens, char *uri)
 
     return i;
 }
+#endif
 
+#ifdef CCNL_LINUXKERNEL
+uint32_t
+ccnl_URItoComponentsK(char **compVector, size_t *compLens, char *uri)
+{
+    uint32_t i;
+    size_t len;
+
+    if (*uri == '/') {
+        uri++;
+    }
+
+    for (i = 0; *uri && i < (CCNL_MAX_NAME_COMP - 1); i++) {
+        compVector[i] = uri;
+        while (*uri && *uri != '/') {
+            uri++;
+        }
+        if (*uri) {
+            *uri = '\0';
+            uri++;
+        }
+        len = unescape_component(compVector[i]);
+
+        if (compLens) {
+            compLens[i] = len;
+        }
+
+        compVector[i][len] = '\0';
+    }
+    compVector[i] = NULL;
+
+    return i;
+}
+#endif
+
+#ifndef CCNL_LINUXKERNEL
 struct ccnl_prefix_s *
 ccnl_URItoPrefix(char* uri, int suite, uint32_t *chunknum)
 {
@@ -364,6 +436,108 @@ ccnl_URItoPrefix(char* uri, int suite, uint32_t *chunknum)
 
     return p;
 }
+#endif
+
+#ifdef CCNL_LINUXKERNEL
+static size_t
+ccnl_pkt_mkComponentK(int suite, uint8_t *dst, char *src, size_t srclen)
+{
+    size_t len = 0;
+
+    switch (suite) {
+#ifdef USE_SUITE_CCNTLV
+    case CCNL_SUITE_CCNTLV: {
+        if (srclen > UINT16_MAX) {
+            return 0;
+        }
+        uint16_t *sp = (uint16_t*) dst;
+        *sp++ = htons(CCNX_TLV_N_NameSegment);
+        len = srclen;
+        *sp++ = htons((uint16_t) len);
+        memcpy(sp, src, len);
+        len += 2*sizeof(uint16_t);
+        break;
+    }
+#endif
+    default:
+        len = srclen;
+        memcpy(dst, src, len);
+        break;
+    }
+
+    return len;
+}
+
+struct ccnl_prefix_s *
+ccnl_URItoPrefixK(char* uri, int suite, uint32_t *chunknum)
+{
+    struct ccnl_prefix_s *p;
+    char *compvect[CCNL_MAX_NAME_COMP];
+    size_t complens[CCNL_MAX_NAME_COMP], len, tlen;
+    uint32_t cnt, i;
+
+    DEBUGMSG_CUTL(TRACE, "ccnl_URItoPrefix(suite=%s, uri=%s)\n",
+             ccnl_suite2str(suite), uri);
+
+    if (strlen(uri)) {
+        cnt = ccnl_URItoComponentsK(compvect, complens, uri);
+    } else {
+        cnt = 0U;
+    }
+
+    p = ccnl_prefix_newK(suite, cnt);
+    if (!p) {
+        return NULL;
+    }
+
+    for (i = 0, len = 0; i < cnt; i++) {
+        len += complens[i];
+    }
+#ifdef USE_SUITE_CCNTLV
+    if (suite == CCNL_SUITE_CCNTLV) {
+        len += cnt * 4; // add TL size
+    }
+#endif
+
+    p->bytes = (unsigned char*) kmalloc(len, GFP_ATOMIC);
+    if (!p->bytes) {
+        kfree(p->bytes);
+        kfree(p->comp);
+        kfree(p->complen);
+        kfree(p->chunknum);
+	kfree(p);
+        return NULL;
+    }
+
+    for (i = 0, len = 0; i < cnt; i++) {
+        char *cp = compvect[i];
+        tlen = complens[i];
+
+        p->comp[i] = p->bytes + len;
+        tlen = ccnl_pkt_mkComponentK(suite, p->comp[i], cp, tlen);
+        p->complen[i] = tlen;
+        len += tlen;
+    }
+
+    p->compcnt = cnt;
+
+    if (chunknum) {
+        p->chunknum = (uint32_t*) kmalloc(sizeof(uint32_t), GFP_ATOMIC);
+        if (!p->chunknum) {
+	    kfree(p->bytes);
+	    kfree(p->comp);
+	    kfree(p->complen);
+	    kfree(p->chunknum);
+	    kfree(p);
+
+            return NULL;
+        }
+        *p->chunknum = *chunknum;
+    }
+
+    return p;
+}
+#endif
 
 #ifdef NEEDS_PREFIX_MATCHING
 
@@ -599,8 +773,6 @@ char*
 ccnl_prefix_to_path(struct ccnl_prefix_s *pr)
 {
     static char prefix_buf[4096];
-    int len= 0, i;
-    int result;
 
     if (!pr)
         return NULL;
@@ -690,6 +862,7 @@ ccnl_prefix_to_str(struct ccnl_prefix_s *pr, char *buf, size_t buflen) {
 
 #endif // CCNL_LINUXKERNEL
 
+#ifndef CCNL_LINUXKERNEL
 char*
 ccnl_prefix_debug_info(struct ccnl_prefix_s *p) {
     size_t len = 0;
@@ -800,4 +973,4 @@ ccnl_prefix_debug_info(struct ccnl_prefix_s *p) {
 
     return buf;
 }
-
+#endif

@@ -25,14 +25,18 @@
 #include <linux/kref.h>
 #include <linux/netfilter.h>
 
+#ifdef CONFIG_PEPDNA_RINA
 /* timeout for RINA flow allocation in msec */
 #define FLOW_ALLOC_TIMEOUT 7000
+#endif
 /* timeout for TCP connection in msec */
 #define TCP_ACCEPT_TIMEOUT 7000
 
 #define pepdna_hash(T, K) hash_min(K, HASH_BITS(T))
 
+#ifdef CONFIG_PEPDNA_RINA
 struct ipcp_flow;
+#endif
 extern struct pepdna_server *pepdna_srv;
 
 

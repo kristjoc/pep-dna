@@ -235,3 +235,23 @@ debug_free(void *p, const char *fn, int lno)
 }
 
 #endif // USE_DEBUG_MALLOC
+
+#ifdef CCNL_LINUXKERNEL
+static inline void*
+ccnl_malloc(int s)
+{
+return kmalloc(s, GFP_ATOMIC);
+}
+
+static inline void*
+ccnl_calloc(int n, int s)
+{
+return kcalloc(n, s, GFP_ATOMIC);
+}
+
+static inline void
+ccnl_free(void *ptr)
+{
+kfree(ptr);
+}
+#endif

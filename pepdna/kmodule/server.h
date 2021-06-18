@@ -45,7 +45,7 @@ enum server_mode {
 
 /**
  * struct pepdna_server - PEP-DNA server struct
- * @mode:        TCP2TCP | TCP2RINA | RINA2TCP | RINA2RINA
+ * @mode:        TCP2TCP | TCP2RINA | TCP2CCN | RINA2TCP | RINA2RINA ...
  * @l2r_wq:      left2right translation workqueue
  * @r2l_wq:      right2left translation workqueue
  * @tcfa_wq:     TCP connect/RINA Flow Allocation workqueue
@@ -73,12 +73,6 @@ void pepdna_l2r_conn_data_ready(struct sock *);
 void pepdna_r2l_conn_data_ready(struct sock *);
 void pepdna_con_li2ri_work(struct work_struct *work);
 void pepdna_con_ri2li_work(struct work_struct *work);
-#ifdef CONFIG_PEPDNA_RINA
-void pepdna_con_i2r_work(struct work_struct *work);
-void pepdna_con_r2i_work(struct work_struct *work);
-void nl_i2r_callback(struct nl_msg *);
-void nl_r2i_callback(struct nl_msg *);
-#endif
 int  pepdna_server_start(void);
 void pepdna_server_stop(void);
 int  pepdna_work_init(struct pepdna_server *);

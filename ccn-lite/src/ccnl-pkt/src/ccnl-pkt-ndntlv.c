@@ -44,7 +44,7 @@
 
 // ----------------------------------------------------------------------
 // packet parsing
-
+#ifndef CCNL_LINUXKERNEL
 int8_t
 ccnl_ndntlv_varlenint(uint8_t **buf, size_t *len, uint64_t *val)
 {
@@ -336,11 +336,11 @@ Bail:
     ccnl_pkt_free(pkt);
     return NULL;
 }
+#endif // #ifndef CCNL_LINUXKERNEL
 
 // ----------------------------------------------------------------------
 
 #ifdef NEEDS_PREFIX_MATCHING
-
 // returns: 0=match, -1=otherwise
 int8_t
 ccnl_ndntlv_cMatch(struct ccnl_pkt_s *p, struct ccnl_content_s *c)
@@ -363,8 +363,7 @@ ccnl_ndntlv_cMatch(struct ccnl_pkt_s *p, struct ccnl_content_s *c)
                      (void *) c);
     return 0;
 }
-
-#endif
+#endif // #ifdef NEEDS_PREFIX_MATCHING
 
 // ----------------------------------------------------------------------
 // packet composition
@@ -456,7 +455,6 @@ ccnl_ndntlv_prependNonNegInt(uint64_t type,
     return 0;
 }
 
-
 int8_t
 ccnl_ndntlv_prependIncludedNonNegInt(uint64_t type, uint64_t val,
                                      uint8_t marker,
@@ -528,6 +526,7 @@ ccnl_ndntlv_prependName(struct ccnl_prefix_s *name,
 
 // ----------------------------------------------------------------------
 
+#ifndef CCNL_LINUXKERNEL
 int8_t
 ccnl_ndntlv_prependInterest(struct ccnl_prefix_s *name, int scope, struct ccnl_ndntlv_interest_opts_s *opts,
                             size_t *offset, uint8_t *buf, size_t *reslen)
@@ -579,7 +578,63 @@ ccnl_ndntlv_prependInterest(struct ccnl_prefix_s *name, int scope, struct ccnl_n
     *reslen = oldoffset - *offset;
     return 0;
 }
+#endif // #ifndef CCNL_LINUXKERNEL
 
+#ifdef CCNL_LINUXKERNEL
+int8_t
+ccnl_ndntlv_prependInterestK(struct ccnl_prefix_s *name, int scope, struct ccnl_ndntlv_interest_opts_s *opts,
+                            size_t *offset, uint8_t *buf, size_t *reslen)
+{
+    size_t oldoffset = *offset;
+
+    if (scope >= 0) {
+        if (scope > 2) {
+            return -1;
+        }
+        if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_Scope, (uint64_t) scope, offset, buf) < 0) {
+            return -1;
+        }
+    }
+
+    /* only include InterestLifetime TLV Guider, if life time > 0 milli seconds */
+    if (opts->interestlifetime) {
+        if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_InterestLifetime,
+                                         opts->interestlifetime, offset, buf) < 0) {
+            return -1;
+        }
+    }
+
+    if (ccnl_ndntlv_prependBlob(NDN_TLV_Nonce, (uint8_t *) &opts->nonce, 4, offset, buf) < 0) {
+        return -1;
+    }
+
+    /* MustBeFresh is the only supported Selector for now */
+    if (opts->mustbefresh) {
+        size_t sel_offset = *offset;
+        if (ccnl_ndntlv_prependTL(NDN_TLV_MustBeFresh, 0U, offset, buf) < 0) {
+            return -1;
+        }
+
+        if (ccnl_ndntlv_prependTL(NDN_TLV_Selectors, sel_offset - *offset, offset, buf) < 0) {
+            return -1;
+        }
+    }
+
+    if (ccnl_ndntlv_prependName(name, offset, buf)) {
+        return -1;
+    }
+
+    if (ccnl_ndntlv_prependTL(NDN_TLV_Interest, oldoffset - *offset,
+                              offset, buf) < 0) {
+        return -1;
+    }
+
+    *reslen = oldoffset - *offset;
+    return 0;
+}
+#endif
+
+#ifndef CCNL_LINUXKERNEL
 int8_t
 ccnl_ndntlv_prependContent(struct ccnl_prefix_s *name,
                            uint8_t *payload, size_t paylen,
@@ -677,6 +732,7 @@ ccnl_ndntlv_prependContent(struct ccnl_prefix_s *name,
     *reslen = oldoffset - *offset;
     return 0;
 }
+#endif // #ifndef CCNL_LINUXKERNEL
 
 #ifdef USE_FRAG
 

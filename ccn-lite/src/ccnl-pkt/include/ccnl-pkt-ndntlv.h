@@ -180,7 +180,11 @@ ccnl_ndntlv_cMatch(struct ccnl_pkt_s *p, struct ccnl_content_s *c);
 int8_t
 ccnl_ndntlv_prependInterest(struct ccnl_prefix_s *name, int scope, struct ccnl_ndntlv_interest_opts_s *opts,
                             size_t *offset, uint8_t *buf, size_t *reslen);
-
+#ifdef CCNL_LINUXKERNEL
+int8_t
+ccnl_ndntlv_prependInterestK(struct ccnl_prefix_s *name, int scope, struct ccnl_ndntlv_interest_opts_s *opts,
+                            size_t *offset, uint8_t *buf, size_t *reslen);
+#endif
 int8_t
 ccnl_ndntlv_prependContent(struct ccnl_prefix_s *name,
                            uint8_t *payload, size_t paylen,

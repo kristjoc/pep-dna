@@ -21,6 +21,9 @@
 #include "netlink.h"
 #include "core.h"        /* pep_debug */
 #include "server.h"      /* nl_callbacks and server_mode enum */
+#ifdef CONFIG_PEPDNA_RINA
+#include "rina.h"
+#endif
 
 #include <linux/workqueue.h>
 #include <net/net_namespace.h>

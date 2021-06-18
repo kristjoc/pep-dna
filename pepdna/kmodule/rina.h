@@ -20,11 +20,13 @@
 #ifndef _PEPDNA_RINA_H
 #define _PEPDNA_RINA_H
 
+#ifdef CONFIG_PEPDNA_RINA
 #include "kfa.h"         /* included for struct ipcp_flow */
 #include "kipcm.h"       /* default_kipcm */
 #include "rds/rfifo.h"   /* rfifo_is_empty */
 
 struct pepdna_con;
+struct nl_msg;
 
 /* timeout for RINA flow poller in usesc */
 #define FLOW_POLL_TIMEOUT 100
@@ -55,5 +57,10 @@ bool flow_is_ok(struct ipcp_flow *);
 void pepdna_flow_alloc(struct work_struct *);
 int  pepdna_con_i2r_fwd(struct pepdna_con *);
 int  pepdna_con_r2i_fwd(struct pepdna_con *);
+void pepdna_con_i2r_work(struct work_struct *work);
+void pepdna_con_r2i_work(struct work_struct *work);
+void nl_i2r_callback(struct nl_msg *);
+void nl_r2i_callback(struct nl_msg *);
+#endif
 
 #endif /* _PEPDNA_RINA_H */

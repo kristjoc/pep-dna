@@ -88,6 +88,15 @@ ccnl_mkInterestObject(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts);
 struct ccnl_buf_s*
 ccnl_mkSimpleInterest(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts);
 
+#ifdef CCNL_LINUXKERNEL
+int8_t
+ccnl_mkInterestK(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts,
+                uint8_t *tmp, uint8_t *tmpend, size_t *len, size_t *offs);
+
+struct ccnl_buf_s*
+ccnl_mkSimpleInterestK(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts);
+#endif
+
 int8_t
 ccnl_mkInterest(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts,
                 uint8_t *tmp, uint8_t *tmpend, size_t *len, size_t *offs);

@@ -23,7 +23,7 @@
 #include "tcp_utils.h"
 
 /*
- * Forward data from TCP socket to RINA flow
+ * Forward data from one TCP socket to another
  * ------------------------------------------------------------------------- */
 int pepdna_con_i2i_fwd(struct socket *from, struct socket *to)
 {

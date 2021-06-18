@@ -19,12 +19,20 @@
  */
 
 
-#include "ccnl-pkt-builder.h"
 
 #ifdef CCNL_RIOT
 #include "random.h"
 #endif
 
+#ifdef CCNL_LINUXKERNEL
+#include <linux/slab.h>
+#include <linux/random.h>
+#include "../include/ccnl-pkt-builder.h"
+#include "../include/ccnl-pkt-ndntlv.h"
+#include "../src/ccnl-pkt-ndntlv.c"
+#else
+#include "ccnl-pkt-builder.h"
+#endif
 #ifdef USE_SUITE_CCNB
 
 int8_t ccnb_isContent(unsigned char *buf, size_t len)
@@ -85,6 +93,7 @@ int8_t ccntlv_isFragment(uint8_t *buf, size_t len)
 
 // ----------------------------------------------------------------------
 
+#ifndef CCNL_LINUXKERNEL
 #ifdef  USE_SUITE_NDNTLV
 int8_t ndntlv_isData(uint8_t *buf, size_t len) {
     uint64_t typ;
@@ -142,9 +151,10 @@ ccnl_isFragment(uint8_t *buf, size_t len, int suite)
                     suite, __func__, __FILE__, __LINE__);
     return -1;
 }
+#endif //#ifndef CCNL_LINUXKERNEL
 
 #ifdef NEEDS_PACKET_CRAFTING
-
+#ifndef CCNL_LINUXKERNEL
 struct ccnl_interest_s *
 ccnl_mkInterestObject(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts)
 {
@@ -196,7 +206,99 @@ ccnl_mkSimpleInterest(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts)
 
     return buf;
 }
+#endif
 
+#ifdef CCNL_LINUXKERNEL
+int8_t
+ccnl_mkInterestK(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts,
+                uint8_t *tmp, uint8_t *tmpend, size_t *len, size_t *offs) {
+    ccnl_interest_opts_u default_opts = {{ 0 }};
+
+    switch (name->suite) {
+#ifdef USE_SUITE_CCNB
+        case CCNL_SUITE_CCNB:
+            ccnl_ccnb_fillInterest(name, NULL, tmp, tmpend, CCNL_MAX_PACKET_SIZE, len);
+            (*offs) = 0;
+            break;
+#endif
+#ifdef USE_SUITE_CCNTLV
+        case CCNL_SUITE_CCNTLV: {
+            if (ccnl_ccntlv_prependInterestWithHdr(name, offs, tmp, len)) {
+                DEBUGMSG(ERROR, "Failed to create interest");
+                return -1;
+            };
+            break;
+        }
+#endif
+#ifdef USE_SUITE_NDNTLV
+        case CCNL_SUITE_NDNTLV:
+            (void) tmpend;
+
+            if (!opts) {
+                opts = &default_opts;
+            }
+
+            if (!opts->ndntlv.nonce) {
+#ifndef CCNL_RIOT
+                opts->ndntlv.nonce = prandom_u32();
+#else
+                opts->ndntlv.nonce = random_uint32();
+#endif
+            }
+
+            if (ccnl_ndntlv_prependInterestK(name, -1, &(opts->ndntlv), offs, tmp, len)) {
+                DEBUGMSG(ERROR, "Failed to create interest");
+                return -1;
+            }
+            DEBUGMSG(TRACE, "Packet length: %zd\n", *len);
+            break;
+#endif
+        default:
+            break;
+    }
+    return 0;
+}
+
+struct ccnl_buf_s*
+ccnl_mkSimpleInterestK(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts)
+{
+    struct ccnl_buf_s *buf = NULL;
+    uint8_t *tmp;
+    size_t len = 0, offs;
+    struct ccnl_prefix_s *prefix;
+    (void)prefix;
+
+    tmp = (uint8_t*) kmalloc(CCNL_MAX_PACKET_SIZE, GFP_ATOMIC);
+    if (!tmp) {
+        return NULL;
+    }
+    offs = CCNL_MAX_PACKET_SIZE;
+
+    if (ccnl_mkInterestK(name, opts, tmp, tmp + CCNL_MAX_PACKET_SIZE, &len, &offs)) {
+        kfree(tmp);
+        return NULL;
+    }
+
+    if (len > 0) {
+	void *data = (void *)tmp + offs;
+	struct ccnl_buf_s *b = (struct ccnl_buf_s*) kmalloc(sizeof(*b) + len, GFP_ATOMIC);
+
+	if (!b) {
+	    return NULL;
+	}
+	b->next = NULL;
+	b->datalen = len;
+	if (data) {
+	    memcpy(b->data, data, len);
+	}
+    }
+    kfree(tmp);
+
+    return buf;
+}
+#endif
+
+#ifndef CCNL_LINUXKERNEL
 int8_t
 ccnl_mkInterest(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts,
                 uint8_t *tmp, uint8_t *tmpend, size_t *len, size_t *offs) {
@@ -346,5 +448,6 @@ ccnl_mkContent(struct ccnl_prefix_s *name, uint8_t *payload, size_t paylen, uint
     return 0;
 }
 
+#endif
 #endif // NEEDS_PACKET_CRAFTING
 // eof

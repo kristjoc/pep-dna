@@ -58,6 +58,11 @@ struct ccnl_prefix_s {
 struct ccnl_prefix_s*
 ccnl_prefix_new(char suite, uint32_t cnt);
 
+#ifdef CCNL_LINUXKERNEL
+struct ccnl_prefix_s*
+ccnl_prefix_newK(char suite, uint32_t cnt);
+#endif
+
 /**
  * @brief Frees CCNL_Prefix datastructure
  *
@@ -159,6 +164,10 @@ unescape_component(char *comp);
 struct ccnl_prefix_s *
 ccnl_URItoPrefix(char* uri, int suite, uint32_t *chunknum);
 
+#ifdef CCNL_LINUXKERNEL
+struct ccnl_prefix_s *
+ccnl_URItoPrefixK(char* uri, int suite, uint32_t *chunknum);
+#endif
 /**
  * @brief Transforms a URI to a list of strings 
  *
@@ -171,6 +180,10 @@ ccnl_URItoPrefix(char* uri, int suite, uint32_t *chunknum);
 uint32_t
 ccnl_URItoComponents(char **compVector, size_t *compLens, char *uri);
 
+#ifndef CCNL_LINUXKERNEL
+uint32_t
+ccnl_URItoComponentsK(char **compVector, size_t *compLens, char *uri);
+#endif
 #ifndef CCNL_LINUXKERNEL
 /**
  * @brief Transforms a Prefix into a URI, separated by '/'

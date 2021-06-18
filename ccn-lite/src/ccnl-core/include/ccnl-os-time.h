@@ -27,6 +27,7 @@
 #include <stdint.h>
 #else
 #include <linux/types.h>
+#include <linux/version.h>
 #endif
 
  #ifdef CCNL_ARDUINO
