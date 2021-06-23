@@ -23,7 +23,7 @@
 
 static struct ctl_table_header *pepdna_ctl_hdr;
 
-static struct ctl_table table[] = {
+static struct ctl_table sys_table[] = {
 	{
 		.procname     = "pepdna_sock_rmem",
 		.data	      = &sysctl_pepdna_sock_rmem,
@@ -47,7 +47,7 @@ static struct ctl_table table[] = {
  * ---------------------------------------------------------------------------*/
 int pepdna_register_sysctl(void)
 {
-	pepdna_ctl_hdr = register_net_sysctl(&init_net, "net/pepdna", table);
+	pepdna_ctl_hdr = register_net_sysctl(&init_net, "net/pepdna", sys_table);
 	if (pepdna_ctl_hdr == NULL)
 		return -ENOMEM;
 

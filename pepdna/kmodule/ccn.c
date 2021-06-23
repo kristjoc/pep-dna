@@ -106,13 +106,13 @@ static int pepdna_fwd_request(struct socket *from, struct socket *to)
 	char content[32] = {0};
         int rc = 0;
         /* allocate buffer memory */
-        unsigned char *buffer = kzalloc(MAX_BUF_SIZE, GFP_KERNEL);
+        unsigned char *buffer = kzalloc(1024, GFP_KERNEL);
         if (!buffer) {
                 pep_err("kzalloc buffer");
                 return -ENOMEM;
         }
         vec.iov_base = buffer;
-        vec.iov_len  = MAX_BUF_SIZE;
+        vec.iov_len  = 1024;
 
         iov_iter_kvec(&msg.msg_iter, READ | ITER_KVEC, &vec, 1, vec.iov_len);
         rc = sock_recvmsg(from, &msg, MSG_DONTWAIT);
@@ -188,7 +188,7 @@ void pepdna_udp_open(struct work_struct *work)
 		sock_release(sock);
 		goto err;
 	}
-	str_ip = inet_ntoa(&(saddr.sin_addr));
+	str_ip = inet_ntoa(&(daddr.sin_addr));
 	pep_debug("PEP-DNA prepared UDP sock to connect to %s:%d", str_ip,
 		  ntohs(daddr.sin_port));
 	kfree(str_ip);
