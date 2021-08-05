@@ -9,7 +9,8 @@ mv *.dat results/
 filename=("fct_pure_tcp_with_tso" "fct_pure_tcp_without_tso" \
           "fct_user_pep_with_tso" "fct_user_pep_without_tso" \
           "fct_pepdna_tcp2tcp_with_tso" "fct_pepdna_tcp2tcp_without_tso" \
-          "fct_pepdna_tcp2rina_with_tso" "fct_pepdna_tcp2rina_without_tso")
+          "fct_pepdna_tcp2rina_with_tso" "fct_pepdna_tcp2rina_without_tso" \
+          "fct_pepdna_tcp2ccn_with_tso" "fct_pepdna_tcp2ccn_without_tso")
 
 cd "results"
 rm "fct.dat"
@@ -26,5 +27,7 @@ python3 plot_fct.py
 
 # Remove the generated fc.dat file
 rm results/fct.dat
+
+open ~/10gbps.eps
 
 # EOF

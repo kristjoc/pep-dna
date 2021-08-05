@@ -8,7 +8,7 @@ from pathlib import Path
 home = str(Path.home())
 
 savefig_path = home + '/'
-labels = ['TCP', 'TCP-TCP_U', 'TCP-TCP', 'TCP-RINA']
+labels = ['TCP', 'TCP-TCP_U', 'TCP-TCP', 'TCP-RINA', 'TCP-CCN']
 filename = ('results/fct.dat')
 imported_data = np.genfromtxt(filename)
 
@@ -23,7 +23,7 @@ def autolabe(ax, rects):
                     xytext=(0, 6),  # 3 points vertical offset
                     textcoords="offset points",
                     ha='center', va='bottom',
-                    fontsize=9, zorder=10)
+                    fontsize=8, zorder=10)
 
 def autolabel(ax, rects):
     '''Attach a text label above each bar displaying its height
@@ -32,12 +32,13 @@ def autolabel(ax, rects):
 
     for err_segment, rect in zip(barlinecols[0].get_segments(), rects):
         height = err_segment[1][1]  # Use height of error bar
+        value = rect.get_height()
 
         ax.text(rect.get_x() + rect.get_width() / 2,
                 height,
-                f'{height:.3f}',
+                f'{value:.3f}',
                 ha='center', va='bottom',
-                fontsize=10, zorder=10)
+                fontsize=9, zorder=10)
 def run_1g():
     ''' Everything inside this function
     '''
@@ -107,7 +108,7 @@ def run_10g():
     '''
     tso_enabled = np.array([])
     yerr_tso_enabled = np.array([])
-    for i in range(0, 7, 2):
+    for i in range(0, 9, 2):
         tso_enabled = np.append(tso_enabled, imported_data[i, 0]/1000)
         yerr_tso_enabled = np.append(yerr_tso_enabled, imported_data[i, 1]/1000)
 
@@ -116,14 +117,14 @@ def run_10g():
 
     tso_disabled = np.array([])
     yerr_tso_disabled = np.array([])
-    for i in range(1, 8, 2):
+    for i in range(1, 10, 2):
         tso_disabled = np.append(tso_disabled, imported_data[i, 0]/1000)
         yerr_tso_disabled = np.append(yerr_tso_disabled, imported_data[i, 1]/1000)
 
     tso_disabled[:] = [round(x, 3) for x in tso_disabled]
     yerr_tso_disabled[:] = [round(x, 3) for x in yerr_tso_disabled]
 
-    x = np.array([1, 1.2, 1.4, 1.6])  # the label locations
+    x = np.array([1, 1.2, 1.4, 1.6, 1.8])  # the label locations
 
     # x = np.arange(len(labels))  # the label locations
     width = 0.08  # the width of the bars
@@ -158,14 +159,15 @@ def run_10g():
     ax.set_xticks(x)
     # ax.set_yticks(np.arange(0, 12.1, 3))
     ax.set_yticks(np.array([0, 3, 6, 9, 11]))
-    ax.set_xticklabels(labels, fontsize=13)
+    ax.set_xticklabels(labels, fontsize=12)
     plt.yticks(fontsize=12)
     legend = ax.legend(fontsize=14, loc='upper left')
     ax.grid(True, which='major', axis='y', lw=0.65, ls='--', dashes=(3, 7), zorder=0)
 
     autolabel(ax, rects1)
     autolabel(ax, rects2)
-    fig.set_size_inches(5, 3.75)
+
+    fig.set_size_inches(5.8, 3.75)
     plt.draw() # Draw the figure so you can find the positon of the legend.
 
     # plt.margins(x=0.02)

@@ -204,7 +204,7 @@ void pepdna_l2r_conn_data_ready(struct sock *sk)
         if (lconnected(con)) {
                 pepdna_con_get(con);
                 if (!queue_work(con->server->l2r_wq, &con->l2r_work)) {
-                        pep_debug("l2r_work was already on a queue");
+                        pep_debug("l2r_work already in queue");
                         pepdna_con_put(con);
                 }
         }

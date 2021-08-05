@@ -45,12 +45,16 @@ bool request_done = false;
 /*
  *  Parse Request from TCP client
  * -------------------------------------------------------------------------- */
-static void parse_request(unsigned char *request, char *content)
+static void parse_request(unsigned char *request, char *content, char *url)
 {
+	char tmp[11] = "/ndn/test/";
+	strcpy(url, tmp);
 	char *pos = strstr((const char *)request, "GET");
 	if (pos) {
 		sscanf(pos, "%*s %s", content);
 	}
+
+	strcat(url, content);
 }
 
 /*
@@ -59,73 +63,68 @@ static void parse_request(unsigned char *request, char *content)
 static int pepdna_send_to_ccn_relay(struct socket *sock, char *content)
 {
 	struct ccnl_buf_s *buf = NULL;
-        struct msghdr msg = {
-                .msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL,
-        };
-        struct kvec vec;
-	int cnt, rc;
+	struct msghdr msg = {
+		.msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL,
+	};
+	struct kvec vec;
+	int rc;
 
 	struct ccnl_prefix_s *prefix = ccnl_URItoPrefixK(content, suite,
 		chunknum == UINT_MAX ? NULL : &chunknum);
 
-	for (cnt = 0; cnt < 3; cnt++) {
-		int32_t nonce = (int32_t) prandom_u32();
-		struct ccnl_face_s dummyFace;
-		ccnl_interest_opts_u int_opts;
+	int32_t nonce = (int32_t) prandom_u32();
+	struct ccnl_face_s dummyFace;
+	ccnl_interest_opts_u int_opts;
 #ifdef USE_SUITE_NDNTLV
-		int_opts.ndntlv.nonce = nonce;
+	int_opts.ndntlv.nonce = nonce;
 #endif
+	memset(&dummyFace, 0, sizeof(dummyFace));
 
-		pep_debug("sending request, iteration %d", cnt);
-
-		memset(&dummyFace, 0, sizeof(dummyFace));
-
-		buf = ccnl_mkSimpleInterestK(prefix, &int_opts);
-		if (!buf) {
-			pep_err("Failed to create interest");
-			return -1;	    // FIXME
-		}
-
-		pep_debug("interest has %zu bytes", buf->datalen);
-		vec.iov_len = buf->datalen;
-		vec.iov_base = (unsigned char *)buf->data;
-
-		rc = kernel_sendmsg(sock, &msg, &vec, 1, buf->datalen);
-                if (rc <= 0)
-                        pep_err("Couldn't send to CCN relay");
+	buf = ccnl_mkSimpleInterestK(prefix, &int_opts);
+	if (!buf) {
+		pep_err("Failed to create interest");
+		return -1;	    // FIXME
 	}
+
+	pep_debug("Sending interest of %zu bytes", buf->datalen);
+	vec.iov_len = buf->datalen;
+	vec.iov_base = (unsigned char *)buf->data;
+
+	rc = kernel_sendmsg(sock, &msg, &vec, 1, buf->datalen);
+	if (rc <= 0)
+		pep_err("Could not send interest to CCN relay");
 	return rc;
 }
 
 static int pepdna_fwd_request(struct socket *from, struct socket *to)
 {
-        struct msghdr msg = {
-                .msg_flags = MSG_DONTWAIT,
-        };
-        struct kvec vec;
+	struct msghdr msg = {
+		.msg_flags = MSG_DONTWAIT,
+	};
+	struct kvec vec;
 	char content[32] = {0};
+	char url[32] = {0};
         int rc = 0;
-        /* allocate buffer memory */
-        unsigned char *buffer = kzalloc(1024, GFP_KERNEL);
-        if (!buffer) {
-                pep_err("kzalloc buffer");
-                return -ENOMEM;
-        }
-        vec.iov_base = buffer;
-        vec.iov_len  = 1024;
+	/* allocate buffer memory */
+	unsigned char *buffer = kzalloc(MAX_BUF_SIZE, GFP_KERNEL);
+	if (!buffer) {
+		pep_err("kzalloc buffer");
+		return -ENOMEM;
+	}
+	vec.iov_base = buffer;
+	vec.iov_len  = MAX_BUF_SIZE;
 
-        iov_iter_kvec(&msg.msg_iter, READ | ITER_KVEC, &vec, 1, vec.iov_len);
-        rc = sock_recvmsg(from, &msg, MSG_DONTWAIT);
-        if (rc > 0) {
+	rc = kernel_recvmsg(from, &msg, &vec, 1, vec.iov_len, MSG_DONTWAIT);
+	if (rc > 0) {
 		buffer[rc] = '\0';
-		parse_request(buffer, content);
+		parse_request(buffer, content, url);
 
-		rc = pepdna_send_to_ccn_relay(to, content);
+		rc = pepdna_send_to_ccn_relay(to, url);
 		request_done = true;
 	}
 
-        kfree(buffer);
-        return rc;
+	kfree(buffer);
+	return rc;
 }
 
 /*
@@ -149,9 +148,9 @@ void pepdna_udp_open(struct work_struct *work)
 	}
 
 	/* Source and Destination addresses */
-	saddr.sin_family      = AF_INET;
-	saddr.sin_addr.s_addr = con->tuple.saddr;
-	saddr.sin_port        = con->tuple.source;
+	/* saddr.sin_family      = AF_INET; */
+	/* saddr.sin_addr.s_addr = con->tuple.saddr; */
+	/* saddr.sin_port        = con->tuple.source; */
 
 	daddr.sin_family      = AF_INET;
 #ifdef CONFIG_PEPDNA_LOCALHOST
@@ -166,7 +165,7 @@ void pepdna_udp_open(struct work_struct *work)
 	pepdna_set_bufsize(sock);
 	/* Set IP_TRANSPARENT sock option so that we can bind original nonlocal IP
 	 * address and TCP port in order to spoof client */
-	pepdna_ip_transparent(sock);
+	/* pepdna_ip_transparent(sock); */
 	/* Mark the socket with 333 MARK. This is only used when PEPDNA is at the
 	 * same host as the server or CCN relay */
 #ifdef CONFIG_PEPDNA_LOCALHOST
@@ -174,12 +173,12 @@ void pepdna_udp_open(struct work_struct *work)
 #endif
 
 	/* 4. Bind to spoof source IP and Port */
-	rc = kernel_bind(sock, (struct sockaddr*)&saddr, sizeof(saddr));
-	if (rc < 0) {
-		pep_err("kernel_bind %d", rc);
-		sock_release(sock);
-		goto err;
-	}
+	/* rc = kernel_bind(sock, (struct sockaddr*)&saddr, sizeof(saddr)); */
+	/* if (rc < 0) { */
+	/* 	pep_err("kernel_bind %d", rc); */
+	/* 	sock_release(sock); */
+	/* 	goto err; */
+	/* } */
 
 	/* 5. Connect to Target Host */
 	rc = kernel_connect(sock, (struct sockaddr*)&daddr, sizeof(daddr), 0);
@@ -193,24 +192,24 @@ void pepdna_udp_open(struct work_struct *work)
 		  ntohs(daddr.sin_port));
 	kfree(str_ip);
 
-        /* Register callbacks for right UDP socket */
-        con->rsock = sock;
-        sk = sock->sk;
-        write_lock_bh(&sk->sk_callback_lock);
-        sk->sk_data_ready = pepdna_udp_data_ready;
-        sk->sk_user_data  = con;
-        write_unlock_bh(&sk->sk_callback_lock);
+	/* Register callbacks for right UDP socket */
+	con->rsock = sock;
+	sk = sock->sk;
+	write_lock_bh(&sk->sk_callback_lock);
+	sk->sk_data_ready = pepdna_udp_data_ready;
+	sk->sk_user_data  = con;
+	write_unlock_bh(&sk->sk_callback_lock);
 
-        /* At this point, reinject SYN back in the stack so that the left
+	/* At this point, reinject SYN back in the stack so that the left
 	 * TCP connection can be established
-         * There is no need to set callbacks here for the left socket as
-         * pepdna_tcp_accept() will take care of it.
-         */
-        pep_debug("Reinjecting initial SYN packet");
-        netif_receive_skb(con->skb);
-        return;
+	 * There is no need to set callbacks here for the left socket as
+	 * pepdna_tcp_accept() will take care of it.
+	 */
+	pep_debug("Reinjecting initial SYN packet");
+	netif_receive_skb(con->skb);
+	return;
 err:
-    pepdna_con_put(con);
+	pepdna_con_put(con);
 }
 
 /* pepdna_udp_data_ready - interrupt callback indicating the socket has data
@@ -218,19 +217,19 @@ err:
  * ------------------------------------------------------------------------- */
 void pepdna_udp_data_ready(struct sock *sk)
 {
-        struct pepdna_con *con = NULL;
+	struct pepdna_con *con = NULL;
 
-        pep_debug("data ready from CCN");
-        read_lock_bh(&sk->sk_callback_lock);
-        con = sk->sk_user_data;
-        if (con) {
-                pepdna_con_get(con);
-                if (!queue_work(con->server->r2l_wq, &con->r2l_work)) {
-                        pep_debug("r2l_work was already on a queue");
-                        pepdna_con_put(con);
-                }
-        }
-        read_unlock_bh(&sk->sk_callback_lock);
+	pep_debug("data ready from CCN");
+	read_lock_bh(&sk->sk_callback_lock);
+	con = sk->sk_user_data;
+	if (con) {
+		pepdna_con_get(con);
+		if (!queue_work(con->server->r2l_wq, &con->r2l_work)) {
+			pep_debug("r2l_work already in queue");
+			pepdna_con_put(con);
+		}
+	}
+	read_unlock_bh(&sk->sk_callback_lock);
 }
 
 /*
@@ -239,18 +238,18 @@ void pepdna_udp_data_ready(struct sock *sk)
  * ------------------------------------------------------------------------- */
 void pepdna_con_c2i_work(struct work_struct *work)
 {
-        struct pepdna_con *con = container_of(work, struct pepdna_con, l2r_work);
-        int rc = 0;
+	struct pepdna_con *con = container_of(work, struct pepdna_con, r2l_work);
+	int rc = 0;
 
-        while (lconnected(con)) {
-                if ((rc = pepdna_con_i2i_fwd(con->rsock, con->lsock)) <= 0) {
-                        if (rc == -EAGAIN) /* FIXME: Handle -EAGAIN flood */
-                                break;
-                        pepdna_con_close(con);
-                        break;
-                }
-        }
-        pepdna_con_put(con);
+	while (lconnected(con)) {
+		if ((rc = pepdna_con_i2i_fwd(con->rsock, con->lsock)) <= 0) {
+			if (rc == -EAGAIN) /* FIXME: Handle -EAGAIN flood */
+				break;
+			pepdna_con_close(con);
+			break;
+		}
+	}
+	pepdna_con_put(con);
 }
 
 /*
@@ -259,13 +258,14 @@ void pepdna_con_c2i_work(struct work_struct *work)
  * ------------------------------------------------------------------------- */
 void pepdna_con_i2c_work(struct work_struct *work)
 {
-        struct pepdna_con *con = container_of(work, struct pepdna_con, l2r_work);
-        int rc = 0;
+	struct pepdna_con *con = container_of(work, struct pepdna_con, l2r_work);
+	int rc = 0;
 
-        while (lconnected(con)) {
+	while (lconnected(con)) {
 		if (unlikely(!request_done)) {
 			rc = pepdna_fwd_request(con->lsock, con->rsock);
 			if (rc <= 0) {
+				pep_debug("failed to forward CCN request");
 				pepdna_con_close(con);
 				break;
 			}
@@ -277,7 +277,7 @@ void pepdna_con_i2c_work(struct work_struct *work)
 				break;
 			}
 		}
-        }
-        pepdna_con_put(con);
+	}
+	pepdna_con_put(con);
 }
 #endif

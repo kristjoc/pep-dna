@@ -254,8 +254,8 @@ int pepdna_con_i2r_fwd(struct pepdna_con *con)
     struct socket *lsock   = con->lsock;
     struct ipcp_flow *flow = con->flow;
     unsigned char *buffer  = NULL;
-    int port_id            = atomic_read(&con->port_id);
-    int rc                 = 0, rs = 0;
+    int port_id = atomic_read(&con->port_id);
+    int rc = 0, rs = 0;
 
     struct msghdr msg = {
         .msg_flags = MSG_DONTWAIT,
@@ -270,8 +270,7 @@ int pepdna_con_i2r_fwd(struct pepdna_con *con)
     }
     vec.iov_base = buffer;
     vec.iov_len  = MAX_BUF_SIZE;
-    iov_iter_kvec(&msg.msg_iter, READ | ITER_KVEC, &vec, 1, vec.iov_len);
-    rc = sock_recvmsg(lsock, &msg, MSG_DONTWAIT);
+    rc = kernel_recvmsg(lsock, &msg, &vec, 1, vec.iov_len, MSG_DONTWAIT);
     if (rc > 0) {
         rs = pepdna_flow_write(flow, port_id, buffer, rc);
         if (rs <= 0) {
@@ -281,7 +280,7 @@ int pepdna_con_i2r_fwd(struct pepdna_con *con)
         }
     } else {
         if (rc == -EAGAIN || rc == -EWOULDBLOCK)
-            pep_debug("sock_recvmsg() says %d", rc);
+            pep_debug("kernel_recvmsg() returned %d", rc);
     }
 
     kfree(buffer);

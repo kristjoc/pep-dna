@@ -48,23 +48,42 @@
 <!-- INTRODUCTION -->
 ## Introduction
 
-PEP-DNA is a Performance Enhancing Proxy designed specifically for Deploying new Network Architectures. It is implemented in the Linux kernel and can be installed wherever a translation needs to occur between a new architecture and TCP/IP domains. PEP-DNA is currently able to interconnect a TCP connection with (i) another TCP connection, (ii) the Recursive InterNetwork Architecture (Visit http://pouzinsociety.org to read more about RINA), and (iii) a Content-Centric Networking domain (https://named-data.net/publications/van-ccn-bremen-description/). This `README.md` file provides information on repeating and replicating the results of the paper. For more information on how to use PEP-DNA in different scenarios, check the Tutorials on the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages.
+PEP-DNA is a Performance Enhancing Proxy designed specifically for Deploying new
+Network Architectures. It is implemented in the Linux kernel and can be
+installed wherever a translation needs to occur between a new architecture and
+TCP/IP domains. PEP-DNA is currently able to interconnect a TCP connection with
+(i) another TCP connection, (ii) the Recursive InterNetwork Architecture (Visit
+<http://pouzinsociety.org> to read more about RINA), and (iii) a Content-Centric
+Networking domain
+(<https://named-data.net/publications/van-ccn-bremen-description/>). This
+`README.md` file provides information on repeating and replicating the results
+of the paper. For more information on how to use PEP-DNA in different scenarios,
+check the Tutorials on the <a
+href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages.
 
 <!-- BUILD INSTRUCTIONS -->
 ## Build instructions
 
-We have tested PEP-DNA with the current stable distribution of Ubuntu and Debian, with kernel versions between 4.1.x to 5.4.x. In order to run all the experiments described in the paper, PEP-DNA needs to be built with RINA and CCN support.
-We use the RINA stack, which is available at https://github.com/IRATI/stack, and CCN-lite, which can be found at https://github.com/cn-uofbasel/ccn-lite, to build RINA and CCN network.
-To facilitate the installation process, we include the RINA stack and CCN-lite in this repository.
+We have tested PEP-DNA with the current stable distribution of Ubuntu and
+Debian, with kernel versions between 4.1.x to 5.4.x. In order to run all the
+experiments described in the paper, PEP-DNA needs to be built with RINA and CCN
+support. We use the RINA stack, which is available at
+<https://github.com/IRATI/stack>, and CCN-lite, which can be found at
+<https://github.com/cn-uofbasel/ccn-lite>, to build RINA and CCN network. To
+facilitate the installation process, we include the RINA stack and CCN-lite in
+this repository.
 
-**Note** that a user with sudo privileges is required to load PEP-DNA and RINA kernel modules apply other commands.
+**Note** that a user with sudo privileges is required to load PEP-DNA and RINA
+kernel modules apply other commands.
 
 ### Prerequisites
 
 First, install the user-space dependencies which are required to build RINA.
    ```sh
    sudo apt-get update
-   sudo apt-get install build-essentials autoconf automake libtool pkg-config git g++ libssl-dev protobuf-compiler libprotobuf-dev socat python python3 openjdk-11-jre openjdk-11-jdk linux-headers-$(uname -r)
+   sudo apt-get install build-essential autoconf automake libtool pkg-config git
+   g++ libssl-dev libelf-dev protobuf-compiler libprotobuf-dev socat python python3
+   openjdk-11-jre openjdk-11-jdk linux-headers-$(uname -r)
    ```
 Next, use the following to install the requirements for CCN-lite:
    ```sh
@@ -74,18 +93,22 @@ Install libnl-3-dev for Netlink sockets support.
    ```sh
    sudo apt-get install libnl-3-dev
    ```
-Additional tools are required to configure Linux hosts, run the experiments and collect information.
+Additional tools are required to configure Linux hosts, run the experiments and
+collect information.
    ```sh
    sudo apt-get install sysstat ethtool cpufrequtils httping httperf apache2
    ```
 
 ### Installation
 
-1. Clone the repository. We recommend to clone the repo in the home directory so that it matches the path used in the scripts.
-   ```bash
-   cd ~
-   git clone https://github.com//pep-dna.git
-   ```
+1. Clone the repository. We recommend to clone the repo in the home directory so
+that it matches the path used in the scripts.
+
+```bash
+  cd ~
+  git clone https://github.com//pep-dna.git
+```
+
 2. Build and install RINA's kernel-space and user-space software
    ```bash
    cd ~/pep-dna/rina-stack

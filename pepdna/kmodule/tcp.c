@@ -27,32 +27,31 @@
  * ------------------------------------------------------------------------- */
 int pepdna_con_i2i_fwd(struct socket *from, struct socket *to)
 {
-        struct msghdr msg = {
-                .msg_flags = MSG_DONTWAIT,
-        };
-        struct kvec vec;
-        int rc = 0, rs        = 0;
-        /* allocate buffer memory */
-        unsigned char *buffer = kzalloc(MAX_BUF_SIZE, GFP_KERNEL);
-        if (!buffer) {
-                pep_err("kzalloc buffer");
-                return -ENOMEM;
-        }
-        vec.iov_base = buffer;
-        vec.iov_len  = MAX_BUF_SIZE;
+	struct msghdr msg = {
+		.msg_flags = MSG_DONTWAIT,
+	};
+	struct kvec vec;
+	int rc = 0, rs = 0;
+	/* allocate buffer memory */
+	unsigned char *buffer = kzalloc(MAX_BUF_SIZE, GFP_KERNEL);
+	if (!buffer) {
+		pep_err("kzalloc -ENOMEM");
+		return -ENOMEM;
+	}
+	vec.iov_base = buffer;
+	vec.iov_len  = MAX_BUF_SIZE;
 
-        iov_iter_kvec(&msg.msg_iter, READ | ITER_KVEC, &vec, 1, vec.iov_len);
-        rc = sock_recvmsg(from, &msg, MSG_DONTWAIT);
-        if (rc > 0) {
-                rs = pepdna_sock_write(to, buffer, rc);
-                if (rc <= 0) {
-                        pep_err("Couldn't write to socket");
-                }
-        } else {
-                if (rc == -EAGAIN || rc == -EWOULDBLOCK)
-                        pep_debug("sock_recvmsg() says %d", rc);
-        }
+	rc = kernel_recvmsg(from, &msg, &vec, 1, vec.iov_len, MSG_DONTWAIT);
+	if (likely(rc > 0)) {
+		rs = pepdna_sock_write(to, buffer, rc);
+		if (rs <= 0) {
+			pep_err("Couldn't write to socket");
+		}
+	} else {
+		if (rc == -EAGAIN || rc == -EWOULDBLOCK)
+			pep_debug("sock_recvmsg() returned %d", rc);
+	}
+	kfree(buffer);
 
-        kfree(buffer);
-        return rc;
+	return rc;
 }

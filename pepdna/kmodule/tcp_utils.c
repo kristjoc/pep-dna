@@ -150,9 +150,10 @@ int pepdna_sock_write(struct socket *sock, unsigned char *buf, size_t len)
                 .msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL,
         };
         struct kvec vec;
-        size_t sent       = 0;
-        size_t left       = len;
-        int rc = 0, count = 0;
+	size_t left = len;
+        size_t sent = 0;
+        int count   = 0;
+	int rc      = 0;
 
         while (left) {
                 vec.iov_len = left;

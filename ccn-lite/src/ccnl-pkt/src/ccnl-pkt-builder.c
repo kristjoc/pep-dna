@@ -281,15 +281,15 @@ ccnl_mkSimpleInterestK(struct ccnl_prefix_s *name, ccnl_interest_opts_u *opts)
 
     if (len > 0) {
 	void *data = (void *)tmp + offs;
-	struct ccnl_buf_s *b = (struct ccnl_buf_s*) kmalloc(sizeof(*b) + len, GFP_ATOMIC);
+	buf = (struct ccnl_buf_s*) kmalloc(sizeof(struct ccnl_buf_s) + len, GFP_ATOMIC);
 
-	if (!b) {
+	if (!buf) {
 	    return NULL;
 	}
-	b->next = NULL;
-	b->datalen = len;
+	buf->next = NULL;
+	buf->datalen = len;
 	if (data) {
-	    memcpy(b->data, data, len);
+	    memcpy(buf->data, data, len);
 	}
     }
     kfree(tmp);

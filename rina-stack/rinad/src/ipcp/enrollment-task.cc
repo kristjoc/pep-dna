@@ -1306,10 +1306,10 @@ void EnrollmentTask::processDisconnectNeighborRequestEvent(const rina::Disconnec
 	}
 
 	deallocate_flows_and_destroy_esm(esm, esm->con.port_id, false);
-        
+
         // Remove RIB object
 	remove_neighbor(event.neighborName.getProcessNamePlusInstance());
-	
+
         // Reply to IPC Manager
 	try {
 		rina::extendedIPCManager->disconnectNeighborResponse(event, 0);
@@ -1344,7 +1344,7 @@ void EnrollmentTask::initiateEnrollment(const rina::EnrollmentRequest& request)
 	flowInformation.difName = request.neighbor_.supporting_dif_name_;
 	flowInformation.flowSpecification.msg_boundaries = true;
 	flowInformation.flowSpecification.orderedDelivery = true;
-        flowInformation.flowSpecification.maxAllowableGap = 0;
+    flowInformation.flowSpecification.maxAllowableGap = 0;
 	flowInformation.flowSpecification.delay = fspec.delay;
 	flowInformation.flowSpecification.loss = fspec.loss;
 	unsigned int handle = -1;

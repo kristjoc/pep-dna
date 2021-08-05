@@ -1,6 +1,7 @@
 /build
 /inst
 tags
+.DS_Store
 
 /include/.autotools
 /include/.cproject

@@ -42,6 +42,12 @@ def run():
         tcp2rina = np.append(tcp2rina, imported_data[i, 0])
         yerr_tcp2rina = np.append(yerr_tcp2rina, imported_data[i, 1])
 
+    tcp2ccn = np.array([])
+    yerr_tcp2ccn = np.array([])
+    for i in range(28, 35):
+        tcp2ccn = np.append(tcp2ccn, imported_data[i, 0])
+        yerr_tcp2ccn = np.append(yerr_tcp2ccn, imported_data[i, 1])
+
     x = np.array([0, 1, 2, 3, 4, 5, 6])
     my_xticks = ['1KB', '8KB', '64KB', '512KB', '4MB', '32MB', '256MB']
 
@@ -81,7 +87,7 @@ def run():
                      ls='none',
                      zorder=20)
 
-# TCP-TCP_U ------------------------------------------- 
+# TCP-TCP_U -------------------------------------------
     plt.errorbar(x,
                  user_pep,
                  linewidth=2,
@@ -157,6 +163,37 @@ def run():
                      capsize=0.7475,
                      capthick=0.5,
                      color='green',
+                     ls='none',
+                     zorder=30)
+
+# TCP2CCN --------------------------------------------
+    plt.errorbar(x,
+                 tcp2ccn,
+                 # ls=':',
+                 linewidth=2,
+                 dashes=[7, 3, 3, 3, 3, 3],
+                 color='gray',
+                 label='TCP-CCN',
+                 zorder=10)
+
+    for i in range(0, 7):
+        if i < 2:
+            tmp = 5 * yerr_offset / 2
+        elif i == 2:
+            tmp = -yerr_offset
+        elif i == 3:
+            tmp = 0
+        elif i == 4:
+            tmp = -yerr_offset
+        elif i > 4:
+            tmp = 0
+
+        plt.errorbar(x[i] + tmp,
+                     tcp2ccn[i],
+                     yerr=yerr_tcp2ccn[i],
+                     capsize=0.7475,
+                     capthick=0.5,
+                     color='gray',
                      ls='none',
                      zorder=30)
 
