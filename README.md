@@ -27,21 +27,21 @@
 
 <!-- TABLE OF CONTENTS -->
 <details open="open">
-        <summary><h2 style="display: inline-block">Table of Contents</h2></summary>
-        <ol>
-        <li><a href="#introduction">Introduction</a></li>
-        <li><a href="#build-instructions">Build instructions</a>
-        <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-        </ul>
-        </li>
-        <li><a href="#reproducibility">Reproducibility</a></li>
-        <li><a href="#contributing">Contributing</a></li>
-        <li><a href="#license">License</a></li>
-        <li><a href="#contact">Contact</a></li>
-        <li><a href="#acknowledgements">Acknowledgements</a></li>
-  </ol>
+  <summary><h2 style="display: inline-block">Table of Contents</h2></summary>
+  <ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#build-instructions">Build instructions</a></li>
+  <ul>
+    <li><a href="#prerequisites">Prerequisites</a></li>
+    <li><a href="#installation">Installation</a></li>
+  </ul>
+  <li><a href="#publications">Publications</a></li>
+  <li><a href="#reproducibility">Reproducibility</a></li>
+  <li><a href="#contributing">Contributing</a></li>
+  <li><a href="#license">License</a></li>
+  <li><a href="#contact">Contact</a></li>
+  <li><a href="#acknowledgements">Acknowledgements</a></li>
+  </ul>
 </details>
 
 
@@ -57,8 +57,9 @@ TCP/IP domains. PEP-DNA is currently able to interconnect a TCP connection with
 Networking domain
 (<https://named-data.net/publications/van-ccn-bremen-description/>). This
 `README.md` file provides information on repeating and replicating the results
-of the paper. For more information on how to use PEP-DNA in different scenarios,
-check the Tutorials on the <a
+of the PEP-DNA paper published. For more information on how to use PEP-DNA in
+different scenarios, check the
+[Tutorials](<https://github.com/kr1stj0n/pep-dna/wiki/Tutorials>) on the <a
 href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages.
 
 <!-- BUILD INSTRUCTIONS -->
@@ -79,88 +80,140 @@ kernel modules apply other commands.
 ### Prerequisites
 
 First, install the user-space dependencies which are required to build RINA.
-   ```sh
-   sudo apt-get update
-   sudo apt-get install build-essential autoconf automake libtool pkg-config git
-   g++ libssl-dev libelf-dev protobuf-compiler libprotobuf-dev socat python python3
-   openjdk-11-jre openjdk-11-jdk linux-headers-$(uname -r)
-   ```
+
+  ```sh
+    sudo apt-get update
+    sudo apt-get install build-essential autoconf automake libtool pkg-config git
+    g++ libssl-dev libelf-dev protobuf-compiler libprotobuf-dev socat python python3
+    openjdk-8-jre openjdk-8-jdk linux-headers-$(uname -r)
+  ```
+
 Next, use the following to install the requirements for CCN-lite:
-   ```sh
-   sudo apt-get install cmake libssl-dev pkg-config libssl-dev libcmocka-dev
-   ```
+
+  ```sh
+    sudo apt-get install cmake libssl-dev pkg-config libssl-dev libcmocka-dev
+    doxygen
+  ```
+
 Install libnl-3-dev for Netlink sockets support.
-   ```sh
-   sudo apt-get install libnl-3-dev
-   ```
+
+  ```sh
+    sudo apt-get install libnl-3-dev
+  ```
+
 Additional tools are required to configure Linux hosts, run the experiments and
 collect information.
-   ```sh
-   sudo apt-get install sysstat ethtool cpufrequtils httping httperf apache2
-   ```
+
+  ```sh
+    sudo apt-get install sysstat ethtool cpufrequtils httping httperf apache2
+  ```
 
 ### Installation
 
-1. Clone the repository. We recommend to clone the repo in the home directory so
-that it matches the path used in the scripts.
+1. Clone the repository (We recommend to clone the repo in the home directory so
+   that it matches the path used in the scripts.)
 
-```bash
-  cd ~
-  git clone https://github.com//pep-dna.git
-```
+   ```sh
+     cd ~
+     git clone https://github.com/kr1stj0n/pep-dna.git
+   ```
 
 2. Build and install RINA's kernel-space and user-space software
-   ```bash
-   cd ~/pep-dna/rina-stack
-   sudo ./configure
-   sudo make install
+
+   ```sh
+     cd ~/pep-dna/rina-stack
+     sudo ./configure
+     sudo -E make install
    ```
+
 3. Build CCN-lite
+
     - Set environment variable `$CCNL_HOME` and add the binary folder of CCN-lite to your `$PATH`:
-    ```bash
-    cd ~/pep-dna/ccn-lite
-    export CCNL_HOME="`pwd`"
-    export PATH=$PATH:"$CCNL_HOME/bin"
-    ```
+      ```sh
+        cd ~/pep-dna/ccn-lite
+        export CCNL_HOME="`pwd`"
+        export PATH=$PATH:"$CCNL_HOME/bin"
+      ```
     To make these variables permanent, add them to your shell's `.rc` file, e.g. `~/.bashrc`.
 
     - Build CCN-lite using `cmake`:
-    ```bash
-    cd $CCNL_HOME
-    mkdir build && cd build
-    cmake ..
-    make
-    ```
+      ```sh
+        cd $CCNL_HOME
+        mkdir build && cd build
+        cmake ..
+        make
+      ```
+
 4. Configure and install PEP-DNA
-   ```bash
-   cd ~/pep-dna/pepdna
-   ./configure --with-rina --with-ccn --with-localhost
-   make all
-   sudo -E make install
+
+   ```sh
+     cd ~/pep-dna/pepdna
+     ./configure --with-rina --with-ccn --with-localhost
+     make all
+     sudo -E make install
    ```
 
-To configure PEP-DNA with RINA support or CCN suport `--with-rina` or `--with-ccn` flags needs to be used. Use `--with-debug` to build PEP-DNA with DEBUG flag.
-   **Note** that building in debug mode will reduce the performance of the proxy and print detailed logging in the kern.log file. When PEP-DNA runs at the same host as the server, it needs to be configured with `---with-localhost` flag in order to enable full transpacency at this case (More details will be provided later). For our experiments, the commands above are sufficient.
-4. All the testing applications and scripts used to run the experiments, collect the results and plot the graphs are located in https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/utils/apps. Run the following commands to install them to `/usr/bin/`.
-   ```bash
-   cd ~/pep-dna/pepdna/utils/apps
-   make all
-   sudo -E make install
-   ```
+To configure PEP-DNA with RINA support or CCN suport `--with-rina` or
+`--with-ccn` flags needs to be used. Use `--with-debug` to build PEP-DNA with
+DEBUG flag.  **Note** that building in debug mode will reduce the performance
+of the proxy and print detailed logging in the kern.log file. When PEP-DNA
+runs at the same host as the server, it needs to be configured with
+`---with-localhost` flag in order to enable full transpacency at this case
+(More details will be provided later). For our experiments, the commands
+above are sufficient.
+
+All the testing applications and scripts used to run the experiments, collect
+the results and plot the graphs are located in
+<https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/utils/apps>.</br>
+Run the following commands to install them to `/usr/bin/`.
+
+  ```sh
+    cd ~/pep-dna/pepdna/utils/apps
+    make all
+    sudo -E make install
+  ```
+
+<!-- PUBLICATIONS -->
+## Publications
+
+We have presented our proxy in two international conferences:
+
+- 29th International Conference on Network Protocols (IEEE ICNP 2021)
+- 12th International Conference on Network of the Future (NoF 2021)
+
+The papers accepted for publications can be found
+[here](<https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/papers/>). Read
+the <a
+href="https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/papers/ciko_welzl_teymoori-pepdna.pdf">technical
+report</a> located in the same directory, for an extended version of the
+work. [Here](<https://youtu.be/Yve_HPlU4hc?t=8613>) you can watch the talk
+about PEP-DNA in the NIPAA'21 Workshop.
 
 <!-- USAGE EXAMPLES -->
 ## Reproducibility
 
-We aim to make our work entirely reproducible and encourage interested researchers to test the code and replicate the reported experimental results. The PEP-DNA implementation and documentation needed to reproduce all the experiments described in the paper are available in this public repository. The tools we developed to the run the experiments were installed at Step 4 of the previous section. The scripts for automated testing, analysis and plotting of the generated data are located at https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/utils/scripts/ alongside with a detailed `README_scripts.md` file.
-Please, read the `README_scripts.md` file for a detailed explanation on how to set the variables for your own testbed environment, run all the experiments and plot the generated dataset.
+We aim to make our work entirely reproducible and encourage interested
+researchers to test the code and replicate the reported experimental
+results. The PEP-DNA implementation and documentation needed to reproduce all
+the experiments described in the paper are available in this public
+repository. The tools we developed to the run the experiments were installed at
+Step 4 of the previous section. The scripts for automated testing, analysis and
+plotting of the generated data are located at
+<https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/utils/scripts/> alongside
+with a detailed `README_scripts.md` file. Read the `README_scripts.md` file for
+a detailed explanation on how to set the variables for your own testbed
+environment, run all the experiments and plot the generated dataset.
 
-_For more step-by-step examples on how to use PEP-DNA in different scenarios, please refer to the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a> pages._
-
+_For more step-by-step examples on how to use PEP-DNA in different scenarios,
+please refer to the <a href="https://github.com/kr1stj0n/pep-dna/wiki">Wiki</a>
+pages._
 
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are what make the open source community such an amazing place to
+be learn, inspire, and create. Any contributions you make are **greatly
+appreciated**.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/udp-support`)
@@ -172,7 +225,8 @@ Contributions are what make the open source community such an amazing place to b
 <!-- LICENSE -->
 ## License
 
-Distributed under the GPL License. See `LICENSE` in https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/ for more information.
+Distributed under the GPL License. See `LICENSE` in
+<https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/> for more information.
 
 
 <!-- CONTACT -->
@@ -180,7 +234,8 @@ Distributed under the GPL License. See `LICENSE` in https://github.com/kr1stj0n/
 
 Kristjon Ciko - kristjoc@ifi.uio.no
 
-Project Link: [https://github.com/kr1stj0n/pep-dna](https://github.com/kr1stj0n/pep-dna)
+Project Link:
+[https://github.com/kr1stj0n/pep-dna](https://github.com/kr1stj0n/pep-dna)
 
 
 <!-- ACKNOWLEDGEMENTS -->
