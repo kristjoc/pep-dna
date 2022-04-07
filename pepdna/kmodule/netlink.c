@@ -104,7 +104,7 @@ retry:
                 return -1;
         }
 
-        memset(&nlmsg, 0, sizeof(nlmsg));
+        memset(&nlmsg, 0, sizeof(struct nl_msg));
         nlmsg.saddr  = be32_to_cpu(saddr);
         nlmsg.source = be16_to_cpu(source);
         nlmsg.daddr  = be32_to_cpu(daddr);
@@ -114,7 +114,7 @@ retry:
         nlmsg.alloc = alloc;
 
         data = (void *) &nlmsg;
-        memcpy(NLMSG_DATA(nlh), data, sizeof(nlmsg));
+        memcpy(NLMSG_DATA(nlh), data, sizeof(struct nl_msg));
 
         rc = netlink_unicast(nl_sock, skb, nl_port_id, MSG_DONTWAIT);
         if (rc < 0) {

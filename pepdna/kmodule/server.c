@@ -231,9 +231,9 @@ void pepdna_r2l_conn_data_ready(struct sock *sk)
 }
 
 static unsigned int pepdna_pre_hook(void *priv, struct sk_buff *skb,
-                const struct nf_hook_state *state)
+				    const struct nf_hook_state *state)
 {
-        struct pepdna_con *con = NULL;
+	struct pepdna_con *con = NULL;
         struct syn_tuple *syn  = NULL;
         const struct iphdr *iph;
         const struct tcphdr *tcph;

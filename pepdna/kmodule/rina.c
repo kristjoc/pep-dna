@@ -295,7 +295,7 @@ void nl_r2i_callback(struct nl_msg *nlmsg)
         struct pepdna_con *con = NULL;
         struct syn_tuple *syn  = NULL;
 
-        pep_debug("r2_icallback is being called");
+        pep_debug("r2i_callback is being called");
         if (nlmsg->alloc) {
                 syn = (struct syn_tuple *)kzalloc(sizeof(struct syn_tuple),
                                 GFP_ATOMIC);

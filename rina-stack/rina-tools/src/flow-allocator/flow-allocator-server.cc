@@ -144,9 +144,6 @@ void FlowAllocatorServer::eraseEvents(int _port_id)
 void FlowAllocatorServer::ev_thread_fn(void *)
 {
     rina::FlowInformation flow;
-    struct nl_msg nlmsg = {0};
-    std::vector<std::string>tokens;
-    std::string s;
     int rc = 0;
 
     while (running) {
@@ -168,6 +165,10 @@ void FlowAllocatorServer::ev_thread_fn(void *)
 
         case FLOW_ALLOCATION_REQUESTED_EVENT:
             {
+                struct nl_msg nlmsg = {0};
+                std::vector<std::string>tokens;
+                std::string s;
+
                 rina::FlowRequestEvent *flowRequestEvent = dynamic_cast<rina::FlowRequestEvent*>(event);
 
                 std::istringstream iss(flowRequestEvent->remoteApplicationName.processInstance.c_str());
@@ -175,7 +176,7 @@ void FlowAllocatorServer::ev_thread_fn(void *)
                 while (std::getline(iss, s, '-'))
                     tokens.push_back(s);
 
-                memset(&nlmsg, 0, sizeof(nlmsg));
+                memset(&nlmsg, 0, sizeof(struct nl_msg));
                 nlmsg.saddr  = cstring_to_uint32(tokens[0].c_str());
                 nlmsg.source = cstring_to_uint16(tokens[1].c_str());
                 nlmsg.daddr  = cstring_to_uint32(tokens[2].c_str());
@@ -200,6 +201,7 @@ void FlowAllocatorServer::ev_thread_fn(void *)
 
         case FLOW_DEALLOCATED_EVENT:
             {
+                struct nl_msg nlmsg = {0};
                 /* TODO This never happens */
                 int port_id = dynamic_cast<FlowDeallocatedEvent*>(event)->portId;
                 ipcManager->flowDeallocated(port_id);
@@ -255,11 +257,11 @@ void FlowAllocatorServer::run(bool blocking)
 
     while (running) {
         memset(nlh, 0, NLMSG_SPACE(NETLINK_MSS));
-        memset(&iov, 0, sizeof(iov));
+        memset(&iov, 0, sizeof(struct iovec));
         iov.iov_base = (void *)nlh;
         iov.iov_len = NLMSG_SPACE(NETLINK_MSS);
 
-        memset(&msg, 0, sizeof(msg));
+        memset(&msg, 0, sizeof(struct msghdr));
         msg.msg_iov    = &iov;
         msg.msg_iovlen = 1;
 
@@ -305,7 +307,6 @@ void FlowAllocatorServer::destroyFlow(int _port_id)
     LOG_DBG("Deallocating flow with port-id %d", _port_id);
     ipcManager->deallocate_flow(_port_id);
     eraseFds(_port_id);
-
 }
 
 FlowAllocatorServer::~FlowAllocatorServer()

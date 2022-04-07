@@ -197,11 +197,11 @@ void FlowAllocatorClient::run()
 
     while (running) {
         memset(nlh, 0, NLMSG_SPACE(NETLINK_MSS));
-        memset(&iov, 0, sizeof(iov));
+        memset(&iov, 0, sizeof(struct iovec));
         iov.iov_base = (void *)nlh;
         iov.iov_len = NLMSG_SPACE(NETLINK_MSS);
 
-        memset(&msg, 0, sizeof(msg));
+        memset(&msg, 0, sizeof(struct msghdr));
         msg.msg_iov    = &iov;
         msg.msg_iovlen = 1;
 
