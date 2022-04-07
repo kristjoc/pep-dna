@@ -176,18 +176,15 @@ Run the following commands to install them to `/usr/bin/`.
 <!-- PUBLICATIONS -->
 ## Publications
 
-We have presented our proxy in two international conferences:
-
 - 29th International Conference on Network Protocols (IEEE ICNP 2021)
+  - Paper: [<https://github.com/kr1stj0n/pep-dna/raw/main/pepdna/papers/icnp-nipaa21.pdf>]
+  - The talk in the NIPAA'21 Workshop: [<https://youtu.be/Yve_HPlU4hc?t=8615>]
+  - DOI: [<https://doi.org/10.1109/ICNP52444.2021.9651953>]
 - 12th International Conference on Network of the Future (NoF 2021)
-
-The papers accepted for publications can be found
-[here](<https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/papers/>). Read
-the <a
-href="https://github.com/kr1stj0n/pep-dna/tree/main/pepdna/papers/ciko_welzl_teymoori-pepdna.pdf">technical
-report</a> located in the same directory, for an extended version of the
-work. [Here](<https://youtu.be/Yve_HPlU4hc?t=8613>) you can watch the talk
-about PEP-DNA in the NIPAA'21 Workshop.
+  - Demo Paper: [<https://github.com/kr1stj0n/pep-dna/raw/main/pepdna/papers/demo-nof211.pdf>]
+  - DOI: [<https://doi.org/10.1109/NoF52522.2021.9609870>]
+- Technical Report
+  - Extended paper: [<http://urn.nb.no/URN:NBN:no-91886>]
 
 <!-- USAGE EXAMPLES -->
 ## Reproducibility
