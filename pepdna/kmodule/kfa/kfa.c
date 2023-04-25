@@ -296,7 +296,7 @@ static int kfa_flow_deallocate(struct ipcp_instance_data *data,
 	}
 
 	flow->state = PORT_STATE_DEALLOCATED;
-        
+
         if (flow->wqs) {
 		wake_up_interruptible_all(&flow->wqs->read_wqueue);
 		wake_up_interruptible_all(&flow->wqs->write_wqueue);

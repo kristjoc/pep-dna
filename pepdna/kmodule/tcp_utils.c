@@ -47,11 +47,9 @@ static bool pepdna_sock_writeable(struct sock *);
  * ------------------------------------------------------------------------- */
 void pepdna_tcp_nodelayedack(struct socket *sock)
 {
-        int rc = 0, val = 1;
-        rc = kernel_setsockopt(sock, SOL_TCP, TCP_QUICKACK, (char *)&val,
-                        sizeof(val));
-        if (rc < 0)
-                pep_debug("Couldn't disable Delayed ACK");
+	pep_debug("Setting TCP_QUICKACK");
+
+	tcp_sock_set_quickack(sock->sk);
 }
 
 /*
@@ -60,8 +58,9 @@ void pepdna_tcp_nodelayedack(struct socket *sock)
  * ------------------------------------------------------------------------- */
 void pepdna_tcp_nonagle(struct socket *sock)
 {
-        int val = 1;
-        kernel_setsockopt(sock, SOL_TCP, TCP_NODELAY, (void *)&val, sizeof(val));
+	pep_debug("Disabling Nagle Algorithm");
+
+	tcp_sock_set_nodelay(sock->sk);
 }
 
 /*
@@ -73,8 +72,9 @@ void pepdna_tcp_nonagle(struct socket *sock)
 void pepdna_ip_transparent(struct socket *sock)
 {
         int rc = 0, val = 1;
-        rc = kernel_setsockopt(sock, SOL_IP, IP_TRANSPARENT, (char *)&val,
-                        sizeof(val));
+
+        rc = sock_common_setsockopt(sock, SOL_IP, IP_TRANSPARENT, (char *)&val,
+				    sizeof(val));
         if (rc < 0)
                 pep_err("Couldn't set IP_TRANSPARENT socket opt");
 }
@@ -82,8 +82,9 @@ void pepdna_ip_transparent(struct socket *sock)
 void pepdna_set_mark(struct socket *sock, int val)
 {
         int rc = 0;
-        rc = kernel_setsockopt(sock, SOL_SOCKET, SO_MARK, (char *)&val,
-                        sizeof(val));
+
+        rc = sock_common_setsockopt(sock, SOL_SOCKET, SO_MARK, (char *)&val,
+				    sizeof(val));
         if (rc < 0)
                 pep_err("Couldn't mark socket with mark %d", val);
 }
@@ -134,7 +135,7 @@ static void pepdna_wait_to_send(struct sock *sk)
         rcu_read_unlock();
 
         do {
-                wait_event_interruptible_timeout(wq->wait,
+		wait_event_interruptible_timeout(wq->wait,
                                                  pepdna_sock_writeable(sk),
                                                  timeo);
         } while(!pepdna_sock_writeable(sk));
