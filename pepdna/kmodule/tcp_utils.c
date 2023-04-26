@@ -49,7 +49,7 @@ void pepdna_tcp_nodelayedack(struct socket *sock)
 {
 	pep_debug("Setting TCP_QUICKACK");
 
-	tcp_sock_set_quickack(sock->sk);
+	tcp_sock_set_quickack(sock->sk, 1);
 }
 
 /*
@@ -71,22 +71,32 @@ void pepdna_tcp_nonagle(struct socket *sock)
  * ------------------------------------------------------------------------- */
 void pepdna_ip_transparent(struct socket *sock)
 {
+	sockptr_t optval;
         int rc = 0, val = 1;
 
-        rc = sock_common_setsockopt(sock, SOL_IP, IP_TRANSPARENT, (char *)&val,
-				    sizeof(val));
-        if (rc < 0)
-                pep_err("Couldn't set IP_TRANSPARENT socket opt");
+	optval.kernel = (void *)&val;
+	optval.is_kernel = true;
+
+	rc = ip_setsockopt(sock->sk, SOL_IP, IP_TRANSPARENT, optval,
+			   sizeof(optval));
+	if (rc < 0) {
+		pep_err("Failed to set IP_TRANSPARENT sockopt: %d\n", rc);
+	}
 }
 
 void pepdna_set_mark(struct socket *sock, int val)
 {
+	sockptr_t optval;
         int rc = 0;
 
-        rc = sock_common_setsockopt(sock, SOL_SOCKET, SO_MARK, (char *)&val,
-				    sizeof(val));
-        if (rc < 0)
-                pep_err("Couldn't mark socket with mark %d", val);
+	optval.kernel = (void *)&val;
+	optval.is_kernel = true;
+
+	rc = ip_setsockopt(sock->sk, SOL_SOCKET, SO_MARK, optval,
+			   sizeof(optval));
+	if (rc < 0) {
+		pep_err("Failed to mark socket with mark %d\n", val);
+	}
 }
 
 /*
@@ -194,9 +204,9 @@ const char *inet_ntoa(struct in_addr *in)
         int_ip = in->s_addr;
 
         sprintf(str_ip, "%d.%d.%d.%d", (int_ip) & 0xFF,
-                                       (int_ip >> 8) & 0xFF,
-                                       (int_ip >> 16) & 0xFF,
-                                       (int_ip >> 24) & 0xFF);
+		(int_ip >> 8) & 0xFF,
+		(int_ip >> 16) & 0xFF,
+		(int_ip >> 24) & 0xFF);
         /* It is the duty of the caller to free the memory allocated by this
          * function
          */
