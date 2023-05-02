@@ -20,8 +20,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef RINA_KFA_H
-#define RINA_KFA_H
+#ifndef RINA_PEPKFA_H
+#define RINA_PEPKFA_H
 
 #include "common.h"
 #include "du.h"
@@ -29,7 +29,7 @@
 #include "iodev.h"
 
 struct kfa;
-/*
+
 struct kfa {
 	spinlock_t		 lock;
 	struct pidm             *pidm;
@@ -67,7 +67,7 @@ struct flowdel_data {
 struct ipcp_instance_data {
 	struct kfa *kfa;
 };
-*/
+
 struct kfa *kfa_create(void);
 int	    kfa_destroy(struct kfa *instance);
 
@@ -132,4 +132,5 @@ struct ipcp_instance *kfa_ipcp_instance(struct kfa *instance);
 bool kfa_flow_exists(struct kfa *kfa, port_id_t port_id);
 
 size_t kfa_flow_max_sdu_size(struct kfa * kfa, port_id_t port_id);
-#endif /* RINA_KFA_H */
+
+#endif /* RINA_PEPKFA_H */

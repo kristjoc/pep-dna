@@ -29,45 +29,7 @@
 #include "iodev.h"
 
 struct kfa;
-/*
-struct kfa {
-	spinlock_t		 lock;
-	struct pidm             *pidm;
-	struct kfa_pmap         *flows;
-	struct ipcp_instance    *ipcp;
-	struct list_head	 list;
-	struct workqueue_struct *flowdelq;
-};
 
-enum flow_state {
-	PORT_STATE_NULL	       = 1,
-	PORT_STATE_PENDING,
-	PORT_STATE_ALLOCATED,
-	PORT_STATE_DEALLOCATED,
-	PORT_STATE_DISABLED
-};
-
-struct ipcp_flow {
-	port_id_t	       port_id;
-	enum flow_state	       state;
-	struct ipcp_instance * ipc_process;
-	struct rfifo         * sdu_ready;
-	struct iowaitqs	     * wqs;
-	atomic_t	       readers;
-	atomic_t	       writers;
-	atomic_t	       posters;
-	bool		       msg_boundaries;
-};
-
-struct flowdel_data {
-	struct kfa *kfa;
-	port_id_t  id;
-};
-
-struct ipcp_instance_data {
-	struct kfa *kfa;
-};
-*/
 struct kfa *kfa_create(void);
 int	    kfa_destroy(struct kfa *instance);
 

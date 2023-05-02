@@ -22,6 +22,7 @@
 
 #ifdef CONFIG_PEPDNA_RINA
 #include "kfa.h"         /* included for struct ipcp_flow */
+#include "pep.h"         /* included for struct ipcp_flow */
 #include "kipcm.h"       /* default_kipcm */
 #include "rds/rfifo.h"   /* rfifo_is_empty */
 
