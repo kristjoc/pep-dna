@@ -69,15 +69,21 @@ static int __init pepdna_init(void)
 
 	rc = pepdna_register_sysctl();
 	if (rc) {
-		pr_err("Register sysctl failed with err. %d", rc);
-		return rc;
+		pep_err("Unable to register sysctl");
+		goto out;
 	}
 
 	rc = pepdna_server_start();
-	if (rc < 0)
-		pr_err("PEP-DNA LKM loaded with errors");
+	if (rc < 0) {
+		pepdna_unregister_sysctl();
+		goto out;
+	}
 
-	pep_info("PEP-DNA LKM loaded succesfully in %s mode", get_mode_name());
+	pep_info("Started pepdna in %s mode", get_mode_name());
+	return 0;
+
+out:
+	pep_err("Unable to load pepdna in %s mode", get_mode_name());
 	return rc;
 }
 
