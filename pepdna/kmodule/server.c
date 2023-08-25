@@ -39,6 +39,8 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 
+#define SSH_PORT 22
+
 /* External variables */
 extern int mode;
 extern int port;
@@ -48,7 +50,7 @@ struct pepdna_server *pepdna_srv = NULL;
 
 /* Static functions */
 static unsigned int pepdna_pre_hook(void *, struct sk_buff *,
-                const struct nf_hook_state *);
+                                    const struct nf_hook_state *);
 static int init_pepdna_server(struct pepdna_server *);
 static int pepdna_i2i_start(struct pepdna_server *);
 #ifdef CONFIG_PEPDNA_RINA
@@ -91,9 +93,9 @@ int pepdna_work_init(struct pepdna_server *srv)
         }
         srv->accept_wq = wq;
 
-        if (srv->mode < 4) {	    /* TCP2TCP,TCP2RINA, TCP2CCN, RINA2TCP */
+        if (srv->mode < 4) {	    /* TCP2TCP, TCP2RINA, TCP2CCN, RINA2TCP */
                 wq = alloc_workqueue("connect_alloc_wq", WQ_HIGHPRI|WQ_UNBOUND,
-                                max_active);
+                                     max_active);
                 if (!wq) {
                         pep_err("Couldn't alloc pepdna tc/fa workqueue");
                         goto free_tcfa_wq;
@@ -231,13 +233,14 @@ void pepdna_r2l_conn_data_ready(struct sock *sk)
 }
 
 static unsigned int pepdna_pre_hook(void *priv, struct sk_buff *skb,
-				    const struct nf_hook_state *state)
+                                    const struct nf_hook_state *state)
 {
-	struct pepdna_con *con = NULL;
+        struct pepdna_con *con = NULL;
         struct syn_tuple *syn  = NULL;
         const struct iphdr *iph;
         const struct tcphdr *tcph;
-        uint32_t hash_id = 0;
+        uint32_t hash_id = 0u;
+        uint64_t ts = 0ull;
 
         if (!skb)
                 return NF_ACCEPT;
@@ -246,14 +249,24 @@ static unsigned int pepdna_pre_hook(void *priv, struct sk_buff *skb,
                 tcph = tcp_hdr(skb);
                 /* Check for packets with ONLY SYN flag set */
                 if (tcph->syn == 1 && tcph->ack == 0 && tcph->rst == 0) {
+#if defined(CONFIG_PEPDNA_LOCAL_SENDER) || defined(CONFIG_PEPDNA_LOCAL_RECEIVER)
+			/* When PEP-DNA runs at the sender/receiver host, do
+			 * not filter the SYN packets which are sent
+			 * by pepdna_tcp_connect() */
+			if (skb->mark == PEPDNA_SOCK_MARK)
+                                return NF_ACCEPT;
+#endif
+                        /* Exclude ssh */
+                        if (ntohs(tcph->dest) == SSH_PORT)
+                                return NF_ACCEPT;
+
                         hash_id = pepdna_hash32_rjenkins1_2(iph->saddr,
-							    tcph->source);
+                                                            tcph->source);
 
                         con = pepdna_con_find(hash_id);
                         if (!con) {
-                                syn = (struct syn_tuple *)kzalloc(sizeof(
-							    struct syn_tuple),
-							    GFP_ATOMIC);
+                                syn = (struct syn_tuple *)kzalloc(sizeof(struct syn_tuple),
+                                                                  GFP_ATOMIC);
                                 if (!syn) {
                                         pep_err("kzalloc failed");
                                         return NF_DROP;
@@ -263,15 +276,28 @@ static unsigned int pepdna_pre_hook(void *priv, struct sk_buff *skb,
                                 syn->daddr  = iph->daddr;
                                 syn->dest   = tcph->dest;
 
-                                con = pepdna_con_alloc(syn, skb, 0);
+                                /* Store tstamp to detect the reinjected SYN */
+                                ts = ktime_get_real_fast_ns();
+                                skb->tstamp = ts;
+
+                                con = pepdna_con_alloc(syn, skb, hash_id, ts, 0);
                                 if (!con) {
                                         pep_err("pepdna_con_alloc failed");
                                         kfree(syn);
                                         return NF_DROP;
                                 }
+
+                                print_syn(syn->daddr, syn->dest);
                                 kfree(syn);
+#ifndef CONFIG_PEPDNA_LOCAL_SENDER
                                 consume_skb(skb);
+#endif
                                 return NF_STOLEN;
+                        } else {
+                                if (skb->tstamp != con->ts) {
+                                        pep_debug("Dropping duplicate SYN");
+                                        return NF_DROP;
+                                }
                         }
                 }
         }
@@ -283,7 +309,11 @@ static const struct nf_hook_ops pepdna_nf_ops[] = {
         {
                 .hook     = pepdna_pre_hook,
                 .pf       = NFPROTO_IPV4,
+#ifndef CONFIG_PEPDNA_LOCAL_SENDER
                 .hooknum  = NF_INET_PRE_ROUTING,
+#else
+                .hooknum  = NF_INET_LOCAL_OUT,
+#endif
                 .priority = NF_PEPDNA_PRI,
         },
 };
@@ -309,7 +339,7 @@ static int pepdna_i2i_start(struct pepdna_server *srv)
         }
 
         nf_register_net_hooks(&init_net, pepdna_nf_ops,
-                        ARRAY_SIZE(pepdna_nf_ops));
+                              ARRAY_SIZE(pepdna_nf_ops));
         return 0;
 }
 
@@ -365,7 +395,7 @@ static int pepdna_i2r_start(struct pepdna_server *srv)
         }
 
         nf_register_net_hooks(&init_net, pepdna_nf_ops,
-                        ARRAY_SIZE(pepdna_nf_ops));
+                              ARRAY_SIZE(pepdna_nf_ops));
         return 0;
 }
 
@@ -415,7 +445,7 @@ static int pepdna_i2c_start(struct pepdna_server *srv)
         }
 
         nf_register_net_hooks(&init_net, pepdna_nf_ops,
-                        ARRAY_SIZE(pepdna_nf_ops));
+                              ARRAY_SIZE(pepdna_nf_ops));
         return 0;
 }
 
@@ -425,7 +455,7 @@ static int pepdna_i2c_start(struct pepdna_server *srv)
  * --------------------------------------------------------------------------*/
 static int pepdna_c2i_start(struct pepdna_server *srv)
 {
-	/* TODO: Not yet implemented! */
+        /* TODO: Not yet implemented! */
         /* int rc = 0; */
 
         /* INIT_WORK(&srv->accept_work, pepdna_acceptor_work); */
@@ -451,7 +481,7 @@ static int pepdna_c2i_start(struct pepdna_server *srv)
  * --------------------------------------------------------------------------*/
 static int pepdna_c2c_start(struct pepdna_server *srv)
 {
-	/* TODO: Not yet implemented! */
+        /* TODO: Not yet implemented! */
         /* int rc = 0; */
 
         /* INIT_WORK(&srv->accept_work, pepdna_acceptor_work); */
@@ -498,7 +528,7 @@ int pepdna_server_start(void)
 {
         int rc = 0;
         struct pepdna_server *srv = kzalloc(sizeof(struct pepdna_server),
-					    GFP_ATOMIC);
+                                            GFP_ATOMIC);
         if (!srv) {
                 pep_err("Couldn't allocate memory for pepdna_server");
                 return -ENOMEM;
@@ -509,48 +539,48 @@ int pepdna_server_start(void)
                 return rc;
 
         switch (srv->mode) {
-                case TCP2TCP:
-                        rc = pepdna_i2i_start(srv);
-                        if (rc < 0)
-                                return rc;
-                        break;
+        case TCP2TCP:
+                rc = pepdna_i2i_start(srv);
+                if (rc < 0)
+                        return rc;
+                break;
 #ifdef CONFIG_PEPDNA_RINA
-                case TCP2RINA:
-                        rc = pepdna_i2r_start(srv);
-                        if (rc < 0)
-                                return rc;
-                        break;
-                case RINA2TCP:
-                        rc = pepdna_r2i_start(srv);
-                        if (rc < 0)
-                                return rc;
-                        break;
-                case RINA2RINA:
-                        rc = pepdna_r2r_start(srv);
-                        if (rc < 0)
-                                return rc;
-                        break;
+        case TCP2RINA:
+                rc = pepdna_i2r_start(srv);
+                if (rc < 0)
+                        return rc;
+                break;
+        case RINA2TCP:
+                rc = pepdna_r2i_start(srv);
+                if (rc < 0)
+                        return rc;
+                break;
+        case RINA2RINA:
+                rc = pepdna_r2r_start(srv);
+                if (rc < 0)
+                        return rc;
+                break;
 #endif
 #ifdef CONFIG_PEPDNA_CCN
-                case TCP2CCN:
-                        rc = pepdna_i2c_start(srv);
-                        if (rc < 0)
-                                return rc;
-                        break;
-                case CCN2TCP:
-                        rc = pepdna_c2i_start(srv);
-                        if (rc < 0)
-                                return rc;
-                        break;
+        case TCP2CCN:
+                rc = pepdna_i2c_start(srv);
+                if (rc < 0)
+                        return rc;
+                break;
+        case CCN2TCP:
+                rc = pepdna_c2i_start(srv);
+                if (rc < 0)
+                        return rc;
+                break;
 		case CCN2CCN:
-                        rc = pepdna_c2c_start(srv);
-                        if (rc < 0)
-                                return rc;
-                        break;
+                rc = pepdna_c2c_start(srv);
+                if (rc < 0)
+                        return rc;
+                break;
 #endif
-                default:
-                        pep_err("PEP-DNA mode undefined");
-                        return -EINVAL;
+        default:
+                pep_err("PEP-DNA mode undefined");
+                return -EINVAL;
         }
 
         return rc;
@@ -569,14 +599,14 @@ void pepdna_server_stop(void)
         /* 1. First, we unregister NF_HOOK to stop processing new SYNs */
         if (pepdna_srv->mode < 3)
                 nf_unregister_net_hooks(&init_net, pepdna_nf_ops,
-                                ARRAY_SIZE(pepdna_nf_ops));
+                                        ARRAY_SIZE(pepdna_nf_ops));
 
         /* 2. Check for connections which are still alive and destroy them */
         if (pepdna_srv->idr_in_use > 0) {
                 hlist_for_each_entry_safe(con, n, pepdna_srv->htable, hlist) {
                         if (con) {
                                 pep_err("Hmmm, %d con. still alive",
-                                                pepdna_srv->idr_in_use);
+                                        pepdna_srv->idr_in_use);
                                 pepdna_con_close(con);
                         }
                 }

@@ -27,10 +27,10 @@
 
 #ifdef CONFIG_PEPDNA_RINA
 /* timeout for RINA flow allocation in msec */
-#define FLOW_ALLOC_TIMEOUT 7000
+#define FLOW_ALLOC_TIMEOUT 3000
 #endif
 /* timeout for TCP connection in msec */
-#define TCP_ACCEPT_TIMEOUT 7000
+#define TCP_ACCEPT_TIMEOUT 3000
 
 #define pepdna_hash(T, K) hash_min(K, HASH_BITS(T))
 
@@ -48,10 +48,10 @@ extern struct pepdna_server *pepdna_srv;
  * @dest    - destination TCP port
  */
 struct syn_tuple {
-    __be32 saddr;
-    __be16 source;
-    __be32 daddr;
-    __be16 dest;
+	__be32 saddr;
+	__be16 source;
+	__be32 daddr;
+	__be16 dest;
 };
 
 /**
@@ -69,33 +69,39 @@ struct syn_tuple {
  * @lflag:     indicates left connection state
  * @rflag:     indicates left connection state
  * @hash_conn_id: 32-bit hash connection identifier
+ * @ts:        timestamp of the first incoming SYN
  * @tuple:     connection tuple
  * @skb:       initial SYN sk_buff
  */
 struct pepdna_con {
-    struct kref kref;
-    struct pepdna_server *server;
-    struct work_struct tcfa_work;
-    struct work_struct l2r_work;
-    struct work_struct r2l_work;
-    struct hlist_node hlist;
+	struct kref kref;
+	struct pepdna_server *server;
+	struct work_struct tcfa_work;
+	struct work_struct l2r_work;
+	struct work_struct r2l_work;
+	struct hlist_node hlist;
 #ifdef CONFIG_PEPDNA_RINA
-    struct ipcp_flow *flow;
-    atomic_t port_id;
+	struct ipcp_flow *flow;
+	atomic_t port_id;
 #endif
-    struct socket *lsock;
-    struct socket *rsock;
-    atomic_t lflag;
-    atomic_t rflag;
-    __u32 hash_conn_id;
-    struct syn_tuple tuple;
-    struct sk_buff *skb;
+	struct socket *lsock;
+	struct socket *rsock;
+	atomic_t lflag;
+	atomic_t rflag;
+	__u32 hash_conn_id;
+	__u64 ts;
+	struct syn_tuple tuple;
+	struct sk_buff *skb;
 };
 
 bool tcpcon_is_ready(struct pepdna_con *);
 bool lconnected(struct pepdna_con *);
 bool rconnected(struct pepdna_con *);
-struct pepdna_con *pepdna_con_alloc(struct syn_tuple *, struct sk_buff *, int);
+struct pepdna_con *pepdna_con_alloc(struct syn_tuple *,
+				    struct sk_buff *,
+				    uint32_t,
+				    uint64_t,
+				    int);
 struct pepdna_con *pepdna_con_find(uint32_t);
 void pepdna_con_get(struct pepdna_con *);
 void pepdna_con_put(struct pepdna_con *);

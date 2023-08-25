@@ -75,7 +75,7 @@ bool tcpcon_is_ready(struct pepdna_con *con)
  * This function is called by the Hook func @'server.c'
  * ------------------------------------------------------------------------- */
 struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
-                int port_id)
+                                    uint32_t hash_id, uint64_t ts, int port_id)
 {
         struct pepdna_con *con = kzalloc(sizeof(struct pepdna_con), GFP_ATOMIC);
         if (!con)
@@ -114,12 +114,12 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
                         INIT_WORK(&con->tcfa_work, pepdna_udp_open);
                         break;
                 case CCN2TCP:
-			/* TODO: Not supported yet! */
+                        /* TODO: Not supported yet! */
                         /* INIT_WORK(&con->l2r_work, pepdna_con_c2i_work); */
                         /* INIT_WORK(&con->r2l_work, pepdna_con_i2c_work); */
                         break;
                 case CCN2CCN:
-			/* TODO: Not supported yet*/
+                        /* TODO: Not supported yet*/
                         /* INIT_WORK(&con->l2r_work, pepdna_con_lc2rc_work); */
                         /* INIT_WORK(&con->r2l_work, pepdna_con_rc2lc_work); */
                         break;
@@ -129,7 +129,8 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
                         return NULL;
         }
 
-        con->hash_conn_id = pepdna_hash32_rjenkins1_2(syn->saddr, syn->source);
+        con->hash_conn_id = hash_id;
+	con->ts = ts;
 #ifdef CONFIG_PEPDNA_RINA
         atomic_set(&con->port_id, port_id);
         con->flow = NULL;
@@ -147,10 +148,10 @@ struct pepdna_con *pepdna_con_alloc(struct syn_tuple *syn, struct sk_buff *skb,
         INIT_HLIST_NODE(&con->hlist);
         hash_add(pepdna_srv->htable, &con->hlist, con->hash_conn_id);
 
-	if (!queue_work(con->server->tcfa_wq, &con->tcfa_work)) {
-		pep_err("tcfa_work already on a queue_work");
-		pepdna_con_put(con);
-	}
+        if (!queue_work(con->server->tcfa_wq, &con->tcfa_work)) {
+                pep_err("tcfa_work already on a queue_work");
+                pepdna_con_put(con);
+        }
 
         return con;
 }

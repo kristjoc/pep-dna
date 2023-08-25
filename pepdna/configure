@@ -1,7 +1,8 @@
 #!/bin/bash
 
 KERNBUILDDIR="/lib/modules/`uname -r`/build"
-CONFIG_PEPDNA_LOCALHOST="n"
+CONFIG_PEPDNA_LOCAL_SENDER="n"
+CONFIG_PEPDNA_LOCAL_RECEIVER="n"
 CONFIG_PEPDNA_DEBUG="n"
 CONFIG_PEPDNA_RINA="n"
 CONFIG_PEPDNA_CCN="n"
@@ -12,8 +13,12 @@ while [[ $# > 0 ]]
 do
         key="$1"
         case $key in
-                "--with-localhost")
-                CONFIG_PEPDNA_LOCALHOST="y"
+                "--with-local-sender")
+                CONFIG_PEPDNA_LOCAL_SENDER="y"
+                ;;
+
+                "--with-local-receiver")
+                CONFIG_PEPDNA_LOCAL_RECEIVER="y"
                 ;;
 
                 "--with-debug")
@@ -59,7 +64,8 @@ sed -i "s|@CONFIG_PEPDNA_RINA@|${CONFIG_PEPDNA_RINA}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_CCN@|${CONFIG_PEPDNA_CCN}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_UDP@|${CONFIG_PEPDNA_UDP}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_DEBUG@|${CONFIG_PEPDNA_DEBUG}|g" Makefile
-sed -i "s|@CONFIG_PEPDNA_LOCALHOST@|${CONFIG_PEPDNA_LOCALHOST}|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_LOCAL_SENDER@|${CONFIG_PEPDNA_LOCAL_SENDER}|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_LOCAL_RECEIVER@|${CONFIG_PEPDNA_LOCAL_RECEIVER}|g" Makefile
 cp Makefile kmodule/Makefile
 
 echo "PEP-DNA configuration phase completed"

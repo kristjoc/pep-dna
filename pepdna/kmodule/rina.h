@@ -25,6 +25,7 @@
 #include "pep.h"         /* included for struct ipcp_flow */
 #include "kipcm.h"       /* default_kipcm */
 #include "rds/rfifo.h"   /* rfifo_is_empty */
+#include "rds/rmem.h"    /* rkzalloc */
 
 struct pepdna_con;
 struct nl_msg;
@@ -45,6 +46,7 @@ extern struct ipcp_instance *kipcm_find_ipcp(struct kipcm *, uint16_t);
 extern struct ipcp_flow *kfa_flow_find_by_pid(struct kfa *, int32_t);
 extern unsigned char *du_buffer(const struct du *);
 extern struct kfa *kipcm_kfa(struct kipcm *);
+extern void * rkzalloc(size_t, gfp_t);
 extern bool rfifo_is_empty(struct rfifo *);
 extern bool is_du_ok(const struct du *);
 extern struct du *du_create(size_t);
