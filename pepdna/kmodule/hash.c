@@ -1,7 +1,7 @@
 /*
- *  pep-dna/pepdna/kmodule/hash.c: PEP-DNA hash functions
+ *  pep-dna/kmodule/hash.c: PEP-DNA hash functions
  *
- *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
+ *  Copyright (C) 2023  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
  */
 
 #include "hash.h"
-
 #include <linux/kernel.h>
 
 /*

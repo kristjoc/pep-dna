@@ -86,7 +86,7 @@ static int pepdna_send_to_ccn_relay(struct socket *sock, char *content)
 		return -1;	    // FIXME
 	}
 
-	pep_debug("Sending interest of %zu bytes", buf->datalen);
+	pep_dbg("Sending interest of %zu bytes", buf->datalen);
 	vec.iov_len = buf->datalen;
 	vec.iov_base = (unsigned char *)buf->data;
 
@@ -188,7 +188,7 @@ void pepdna_udp_open(struct work_struct *work)
 		goto err;
 	}
 	str_ip = inet_ntoa(&(daddr.sin_addr));
-	pep_debug("PEP-DNA prepared UDP sock to connect to %s:%d", str_ip,
+	pep_dbg("PEP-DNA prepared UDP sock to connect to %s:%d", str_ip,
 		  ntohs(daddr.sin_port));
 	kfree(str_ip);
 
@@ -205,7 +205,7 @@ void pepdna_udp_open(struct work_struct *work)
 	 * There is no need to set callbacks here for the left socket as
 	 * pepdna_tcp_accept() will take care of it.
 	 */
-	pep_debug("Reinjecting initial SYN packet");
+	pep_dbg("Reinjecting initial SYN packet");
 	netif_receive_skb(con->skb);
 	return;
 err:
@@ -219,13 +219,13 @@ void pepdna_udp_data_ready(struct sock *sk)
 {
 	struct pepdna_con *con = NULL;
 
-	pep_debug("data ready from CCN");
+	pep_dbg("data ready from CCN");
 	read_lock_bh(&sk->sk_callback_lock);
 	con = sk->sk_user_data;
 	if (con) {
 		pepdna_con_get(con);
 		if (!queue_work(con->server->r2l_wq, &con->r2l_work)) {
-			pep_debug("r2l_work already in queue");
+			pep_dbg("r2l_work already in queue");
 			pepdna_con_put(con);
 		}
 	}
@@ -265,7 +265,7 @@ void pepdna_con_i2c_work(struct work_struct *work)
 		if (unlikely(!request_done)) {
 			rc = pepdna_fwd_request(con->lsock, con->rsock);
 			if (rc <= 0) {
-				pep_debug("failed to forward CCN request");
+				pep_dbg("failed to forward CCN request");
 				pepdna_con_close(con);
 				break;
 			}

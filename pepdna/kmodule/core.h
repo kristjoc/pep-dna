@@ -1,7 +1,7 @@
 /*
- *  pep-dna/pepdna/kmodule/core.h: PEP-DNA header with global declarations
+ *  pep-dna/kmodule/core.h: PEP-DNA core header
  *
- *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
+ *  Copyright (C) 2023  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,27 +21,30 @@
 #define _PEPDNA_CORE_H
 
 #include <linux/netdevice.h>
+#include <linux/sched.h>
 
-#define PEPDNA_MOD_VER "0.3.0"
+#define PEPDNA_MOD_VER "0.4.0"
+#define PEPDNA_DESCRIPTION "PEP-DNA: a Performance Enhancing Proxy for "\
+	"Deploying Network Architectures"
 
 extern int sysctl_pepdna_sock_rmem[3] __read_mostly;
 extern int sysctl_pepdna_sock_wmem[3] __read_mostly;
 
 #ifdef CONFIG_PEPDNA_DEBUG
-#define pep_debug(fmt, args...) pr_debug("pepdna[DBG] %s(): " fmt"\n", \
-                                         __func__ , ##args)
+#define pep_dbg(fmt, args...) pr_debug("pepdna[DBG] %s() [%d]: " fmt"\n", \
+	__func__ , current->pid, ##args)
 #else
 /* do nothing instead of pr_debug() */
 static inline __printf(1, 2)
-void pep_debug(char *fmt, ...)
+void pep_dbg(char *fmt, ...)
 {
 }
 #endif
 
-#define pep_err(fmt, args...) pr_err("pepdna[ERR] %s(): " fmt"\n", \
-                                     __func__ , ##args)
-#define pep_info(fmt, args...) pr_info("pepdna[INFO] %s(): " fmt"\n", \
-                                       __func__ , ##args)
+#define pep_err(fmt, args...) pr_err("pepdna[ERR] %s() [%d]: " fmt"\n", \
+	__func__ , current->pid, ##args)
+#define pep_info(fmt, args...) pr_info("pepdna[INFO] %s() [%d]: " fmt"\n", \
+	__func__ , current->pid, ##args)
 
 #ifdef CONFIG_SYSCTL
 int pepdna_register_sysctl(void);

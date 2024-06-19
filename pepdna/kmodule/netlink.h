@@ -1,7 +1,7 @@
 /*
- *  pep-dna/pepdna/kmodule/netlink.h: Header file for PEP-DNA Netlink code
+ *  pep-dna/kmodule/netlink.h: Header file for PEP-DNA Netlink code
  *
- *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
+ *  Copyright (C) 2023  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,22 +32,22 @@
 
 /**
  * struct nl_msg - netlink struct we send to fallocator
- * @saddr:        source IP address
- * @source:       source TCP port
- * @daddr:        destination IP address
- * @dest:         destination TCP port
- * @hash_conn_id: connection id
- * @port_id:      port id of RINA flow
- * @alloc:        1: allocation | 0: deallocation
+ * @saddr: source IP address
+ * @source: source TCP port
+ * @daddr: destination IP address
+ * @dest: destination TCP port
+ * @id: connection id
+ * @port_id: port id of RINA flow
+ * @alloc: 1: allocate / 0: deallocate
  */
 struct nl_msg {
-    uint32_t saddr;
-    uint16_t source;
-    uint32_t daddr;
-    uint16_t dest;
-    uint32_t hash_conn_id;
-    int port_id;
-    bool alloc;
+	u32 saddr;
+	u16 source;
+	u32 daddr;
+	u16 dest;
+	u32 id;
+	int port_id;
+	bool alloc;
 } __attribute__ ((packed));
 
 int  pepdna_netlink_init(void);

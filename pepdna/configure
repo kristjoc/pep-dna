@@ -7,59 +7,65 @@ CONFIG_PEPDNA_DEBUG="n"
 CONFIG_PEPDNA_RINA="n"
 CONFIG_PEPDNA_CCN="n"
 CONFIG_PEPDNA_UDP="n"
+CONFIG_PEPDNA_MINIP="n"
 
 # Parse options from ./configure --
 while [[ $# > 0 ]]
 do
-        key="$1"
-        case $key in
-                "--with-local-sender")
-                CONFIG_PEPDNA_LOCAL_SENDER="y"
-                ;;
+	key="$1"
+	case $key in
+		"--with-local-sender")
+		CONFIG_PEPDNA_LOCAL_SENDER="y"
+		;;
 
-                "--with-local-receiver")
-                CONFIG_PEPDNA_LOCAL_RECEIVER="y"
-                ;;
+		"--with-local-receiver")
+		CONFIG_PEPDNA_LOCAL_RECEIVER="y"
+		;;
 
-                "--with-debug")
-                CONFIG_PEPDNA_DEBUG="y"
-                ;;
+		"--with-debug")
+		CONFIG_PEPDNA_DEBUG="y"
+		;;
 
-                "--with-udp")
-                CONFIG_PEPDNA_UDP="y"
-                ;;
+		"--with-udp")
+		CONFIG_PEPDNA_UDP="y"
+		;;
 
-                "--with-rina")
-                CONFIG_PEPDNA_RINA="y"
-                ;;
+		"--with-rina")
+		CONFIG_PEPDNA_RINA="y"
+		;;
 
-                "--with-ccn")
-                CONFIG_PEPDNA_CCN="y"
-                ;;
+		"--with-ccn")
+		CONFIG_PEPDNA_CCN="y"
+		;;
 
-                # NEW ARCHITECTURE
-                # "--with-new-arch")
-                # CONFIG_PEPDNA_NEW_ARCH="y"
-                # ;;
+		"--with-minip")
+		CONFIG_PEPDNA_MINIP="y"
+		;;
 
-                *)
-                echo "Unknown option '$key'"
-                exit 255
-                ;;
-        esac
-        shift
+		# NEW ARCHITECTURE
+		# "--with-new-arch")
+		# CONFIG_PEPDNA_NEW_ARCH="y"
+		# ;;
+
+		*)
+		echo "Unknown option '$key'"
+		exit 255
+		;;
+	esac
+	shift
 done
 
 # Check if kernel headers are there for out-of-tree build
 if [ ! -d $KERNBUILDDIR ]; then
-        echo "Cannot find '$KERNBUILDDIR' kernel build directory"
-        echo "Make sure headers for the running kernel are installed"
-        exit 255
+	echo "Cannot find '$KERNBUILDDIR' kernel build directory"
+	echo "Make sure headers for the running kernel are installed"
+	exit 255
 fi
 
 # Generate the main Makefile
 cp Makefile.in Makefile
 sed -i "s|@KERNBUILDDIR@|$KERNBUILDDIR|g" Makefile
+sed -i "s|@CONFIG_PEPDNA_MINIP@|${CONFIG_PEPDNA_MINIP}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_RINA@|${CONFIG_PEPDNA_RINA}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_CCN@|${CONFIG_PEPDNA_CCN}|g" Makefile
 sed -i "s|@CONFIG_PEPDNA_UDP@|${CONFIG_PEPDNA_UDP}|g" Makefile
@@ -69,5 +75,5 @@ sed -i "s|@CONFIG_PEPDNA_LOCAL_RECEIVER@|${CONFIG_PEPDNA_LOCAL_RECEIVER}|g" Make
 cp Makefile kmodule/Makefile
 
 echo "PEP-DNA configuration phase completed"
-echo "Run 'make all' to compile the module"
-echo "Run 'sudo -E make install' to install the module"
+echo "Run 'make all' to compile the kernel module"
+echo "Run 'sudo -E make install' to install the kernel module "

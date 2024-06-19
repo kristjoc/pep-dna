@@ -1,7 +1,7 @@
 /*
- *  pep-dna/pepdna/kmodule/sysctl.c: sysctl interface to PEPDNA subsystem
+ *  pep-dna/kmodule/sysctl.c: sysctl interface to PEPDNA subsystem
  *
- *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
+ *  Copyright (C) 2023  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ static struct ctl_table sys_table[] = {
 int pepdna_register_sysctl(void)
 {
 	pepdna_ctl_hdr = register_net_sysctl(&init_net, "net/pepdna", sys_table);
-	if (pepdna_ctl_hdr == NULL)
+	if (!pepdna_ctl_hdr)
 		return -ENOMEM;
 
 	return 0;

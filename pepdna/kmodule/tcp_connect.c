@@ -1,7 +1,7 @@
 /*
- *  pep-dna/pepdna/kmodule/tcp_connet.c: PEP-DNA TCP connect()
+ *  pep-dna/kmodule/tcp_connet.c: PEP-DNA TCP connect()
  *
- *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
+ *  Copyright (C) 2023  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,29 +27,31 @@
 #include "rina.h"
 #endif
 
+#ifdef CONFIG_PEPDNA_MINIP
+#include "minip.h"
+#endif
+
 #ifdef CONFIG_PEPDNA_LOCAL_SENDER
 #include <net/ip.h>
 #endif
 
 /*
- * TCP2TCP | RINA2TCP  scenario
+ * TCP2TCP | RINA2TCP | MINIP2TCP  scenarios
  * Connect to TCP|RINA server upon accepting the connection
  * ------------------------------------------------------------------------- */
 void pepdna_tcp_connect(struct work_struct *work)
 {
 	struct pepdna_con *con = container_of(work, struct pepdna_con, tcfa_work);
-	struct sockaddr_in saddr = {0};
-	struct sockaddr_in daddr = {0};
-	struct socket *sock      = NULL;
-	struct sock *sk          = NULL;
-	const char *str_ip       = NULL;
-	int rc                   = 0;
+	struct sockaddr_in saddr = {0}, daddr = {0};
+	struct socket *sock = NULL;
+	struct sock *sk = NULL;
+	const char *from, *to;
+	int rc = 0;
 
 	/* 1. Create socket */
-	if (sock_create_kern(&init_net, AF_INET, SOCK_STREAM, IPPROTO_TCP,
-			     &sock) < 0) {
+	if (sock_create_kern(&init_net, AF_INET, SOCK_STREAM, IPPROTO_TCP, &sock) < 0) {
 		pep_err("sock_create_kern returned %d", rc);
-		return;
+		goto err;
 	}
 
 	/* Source and Destination addresses */
@@ -82,7 +84,7 @@ void pepdna_tcp_connect(struct work_struct *work)
 #endif
 
 #ifndef CONFIG_PEPDNA_LOCAL_SENDER
-	/* 4. Bind before connect to spoof source IP and Port */
+	/* 4. Bind before connect to spoof source IP and TCP port */
 	rc = kernel_bind(sock, (struct sockaddr*)&saddr, sizeof(saddr));
 	if (rc < 0) {
 		pep_err("kernel_bind %d", rc);
@@ -90,17 +92,23 @@ void pepdna_tcp_connect(struct work_struct *work)
 		goto err;
 	}
 #endif
-
 	/* 5. Connect to Target Host */
+	/* Use O_NONBLOCK flag if you don't want to wait for the right
+           TCP connection establishment */
 	rc = kernel_connect(sock, (struct sockaddr*)&daddr, sizeof(daddr), 0);
 	if (rc < 0 && (rc != -EINPROGRESS)) {
 		pep_err("kernel_connect failed %d", rc);
-		sock_release(sock);
+		if (sock) {
+			kernel_sock_shutdown(sock, SHUT_RDWR);
+			sock_release(sock);
+		}
 		goto err;
 	}
-	str_ip = inet_ntoa(&(daddr.sin_addr));
-	pep_debug("PEP-DNA rconnected to %s:%d",str_ip, ntohs(daddr.sin_port));
-	kfree(str_ip);
+	from = inet_ntoa(&(saddr.sin_addr));
+	to   = inet_ntoa(&(daddr.sin_addr));
+	pep_dbg("pepdna established %s:%d -> %s:%d connection",
+		  from, ntohs(saddr.sin_port), to, ntohs(daddr.sin_port));
+	kfree(from); kfree(to);
 
 	if (con->server->mode == TCP2TCP) {
 		/* Register callbacks for right socket */
@@ -111,12 +119,13 @@ void pepdna_tcp_connect(struct work_struct *work)
 		sk->sk_user_data  = con;
 		write_unlock_bh(&sk->sk_callback_lock);
 
-	    /* At this point, right TCP connection is established. Reinject SYN in
-	     * back in the stack so that the left TCP connection can be established
-	     * There is no need to set callbacks here for the left socket as
-	     * pepdna_tcp_accept() will take care of it.
-	     */
-		pep_debug("Reinjecting initial SYN packet");
+		/* At this point, right TCP connection is established.
+		 * Reinject SYN in back in the stack so that the left
+		 * TCP connection can be established There is no need
+		 * to set callbacks here for the left socket as
+		 * pepdna_tcp_accept() will take care of it.
+		 */
+		pep_dbg("Reinjecting initial SYN packet");
 #ifndef CONFIG_PEPDNA_LOCAL_SENDER
 		netif_receive_skb(con->skb);
 #else
@@ -129,10 +138,9 @@ void pepdna_tcp_connect(struct work_struct *work)
 	if (con->server->mode == RINA2TCP) {
 		rc = pepdna_nl_sendmsg(con->tuple.saddr, con->tuple.source,
 				       con->tuple.daddr, con->tuple.dest,
-				       con->hash_conn_id,
-				       atomic_read(&con->port_id), 1);
+				       con->id, atomic_read(&con->port_id), 1);
 		if (rc < 0) {
-			pep_err("Couldn't notify fallocator to resume flow allocation");
+			pep_err("Couldn't ask to resume flow allocation");
 			goto err;
 		}
 		/* Register callbacks for 'left' socket */
@@ -144,7 +152,34 @@ void pepdna_tcp_connect(struct work_struct *work)
 		write_unlock_bh(&sk->sk_callback_lock);
 	}
 #endif
+#ifdef CONFIG_PEPDNA_MINIP
+	if (con->server->mode == MINIP2TCP) {
+		rc = pepdna_minip_send_response(con->id, con->server->to_mac);
+		if (rc < 0) {
+			pep_err("Failed to send MINIP_CONN_RESPONSE");
+			goto err;
+                }
+
+                con->state = ESTABLISHED;
+                con->next_seq++;
+                atomic_inc(&con->last_acked);
+                con->next_recv++;
+
+		/* Register callbacks for 'left' socket */
+		con->lsock = sock;
+		sk         = sock->sk;
+		write_lock_bh(&sk->sk_callback_lock);
+		sk->sk_data_ready = pepdna_l2r_conn_data_ready;
+		sk->sk_user_data  = con;
+		write_unlock_bh(&sk->sk_callback_lock);
+
+		/* At this point, the right TCP connection is established */
+		atomic_set(&con->lflag, 1);
+		/* Wake up 'left' socket */
+		con->lsock->sk->sk_data_ready(con->lsock->sk);
+	}
+#endif
 	return;
 err:
-	pepdna_con_put(con);
+	pepdna_con_close(con);
 }

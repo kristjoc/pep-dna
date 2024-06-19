@@ -1,7 +1,7 @@
 /*
- *  pep-dna/pepdna/kmodule/core.c: PEP-DNA core module
+ *  pep-dna/kmodule/core.c: PEP-DNA core module
  *
- *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
+ *  Copyright (C) 2023  Kristjon Ciko <kristjoc@ifi.uio.no>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,16 +26,23 @@
 #include <linux/moduleparam.h>
 
 /* START of Module Parameters */
-
 int port = 0;
 module_param(port, int, 0644);
-MODULE_PARM_DESC(port, "TCP port for listen()");
+MODULE_PARM_DESC(port, "PEP-DNA main TCP listening port");
 
 int mode = -1;
 module_param(mode, int, 0644);
-MODULE_PARM_DESC(mode,
-     "TCP2TCP | TCP2RINA | TCP2CCN | RINA2TCP | RINA2RINA | CCN2TCP | CCN2CCN");
+MODULE_PARM_DESC(mode, "PEP-DNA operating mode (e.g., TCP2TCP, TCP2RINA, ...)");
 
+#ifdef CONFIG_PEPDNA_MINIP
+char *ifname = "eth0";
+module_param(ifname, charp, 0644);
+MODULE_PARM_DESC(ifname, "Interface name");
+
+char *macstr = "ff:ff:ff:ff:ff:ff";
+module_param(macstr, charp, 0644);
+MODULE_PARM_DESC(macstr, "Ethernet MAC address of the peer PEP-DNA");
+#endif
 /* END of Module Parameters */
 
 int sysctl_pepdna_sock_rmem[3] __read_mostly;	    /* min/default/max */
@@ -44,14 +51,26 @@ int sysctl_pepdna_sock_wmem[3] __read_mostly;	    /* min/default/max */
 static const char* get_mode_name(void)
 {
 	switch (mode) {
-		case 0:  return "TCP2TCP";
-		case 1:  return "TCP2RINA";
-		case 2:  return "TCP2CCN";
-		case 3:  return "RINA2TCP";
-		case 4:  return "RINA2RINA";
-		case 5:  return "CCN2TCP";
-		case 6:  return "CCN2CCN";
-		default: return "ERROR";
+	case 0:
+		return "TCP2TCP";
+	case 1:
+		return "TCP2RINA";
+	case 2:
+		return "TCP2CCN";
+	case 3:
+		return "TCP2MINIP";
+	case 4:
+		return "RINA2TCP";
+	case 5:
+		return "MINIP2TCP";
+	case 6:
+		return "CCN2TCP";
+	case 7:
+		return "RINA2RINA";
+	case 8:
+		return "CCN2CCN";
+	default:
+		return "ERROR";
 	}
 }
 
@@ -79,11 +98,12 @@ static int __init pepdna_init(void)
 		goto out;
 	}
 
-	pep_info("Started pepdna in %s mode", get_mode_name());
-	return 0;
+        pep_info("pepdna loaded in %s mode", get_mode_name());
 
+	return 0;
 out:
 	pep_err("Unable to load pepdna in %s mode", get_mode_name());
+
 	return rc;
 }
 
@@ -103,4 +123,4 @@ module_exit(pepdna_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kr1stj0n C1k0");
 MODULE_VERSION(PEPDNA_MOD_VER);
-MODULE_DESCRIPTION("PEP-DNA kernel module");
+MODULE_DESCRIPTION(PEPDNA_DESCRIPTION);

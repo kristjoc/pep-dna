@@ -1,7 +1,7 @@
 /*
- *  pep-dna/pepdna/kmodule/rina.h: Header file for PEP-DNA RINA support
+ *  pep-dna/kmodule/rina.h: Header file for PEP-DNA RINA support
  *
- *  Copyright (C) 2020  Kristjon Ciko <kristjoc@ifi.uio.no>
+ *  Copyright (C) 2023	Kristjon Ciko <kristjoc@ifi.uio.no>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,11 +21,11 @@
 #define _PEPDNA_RINA_H
 
 #ifdef CONFIG_PEPDNA_RINA
-#include "kfa.h"         /* included for struct ipcp_flow */
-#include "pep.h"         /* included for struct ipcp_flow */
-#include "kipcm.h"       /* default_kipcm */
-#include "rds/rfifo.h"   /* rfifo_is_empty */
-#include "rds/rmem.h"    /* rkzalloc */
+#include "kfa.h"	 /* included for struct ipcp_flow */
+#include "pep.h"	 /* included for struct ipcp_flow */
+#include "kipcm.h"	 /* default_kipcm */
+#include "rds/rfifo.h"	 /* rfifo_is_empty */
+#include "rds/rmem.h"	 /* rkzalloc */
 
 struct pepdna_con;
 struct nl_msg;
@@ -33,15 +33,15 @@ struct nl_msg;
 /* timeout for RINA flow poller in usesc */
 #define FLOW_POLL_TIMEOUT 100
 
-#define IRQ_BARRIER                                                     \
-        do {                                                            \
-                if (in_interrupt()) {                                   \
-                        BUG();                                          \
-                }                                                       \
-        } while (0)
+#define IRQ_BARRIER							\
+	do {								\
+		if (in_interrupt()) {					\
+			BUG();						\
+		}							\
+	} while (0)
 
 /* Exported Symbols from IRATI kernel modules */
-extern int kfa_flow_du_read(struct kfa  *, int32_t, struct du **, size_t, bool);
+extern int kfa_flow_du_read(struct kfa	*, int32_t, struct du **, size_t, bool);
 extern struct ipcp_instance *kipcm_find_ipcp(struct kipcm *, uint16_t);
 extern struct ipcp_flow *kfa_flow_find_by_pid(struct kfa *, int32_t);
 extern unsigned char *du_buffer(const struct du *);
@@ -57,11 +57,9 @@ bool flow_is_ready(struct pepdna_con *);
 bool queue_is_ready(struct ipcp_flow *);
 long pepdna_wait_for_sdu(struct ipcp_flow *);
 bool flow_is_ok(struct ipcp_flow *);
-void pepdna_flow_alloc(struct work_struct *);
-int  pepdna_con_i2r_fwd(struct pepdna_con *);
-int  pepdna_con_r2i_fwd(struct pepdna_con *);
-void pepdna_con_i2r_work(struct work_struct *work);
-void pepdna_con_r2i_work(struct work_struct *work);
+void pepdna_rina_flow_alloc(struct work_struct *);
+void pepdna_con_i2r_work(struct work_struct *);
+void pepdna_con_r2i_work(struct work_struct *);
 void nl_i2r_callback(struct nl_msg *);
 void nl_r2i_callback(struct nl_msg *);
 #endif
