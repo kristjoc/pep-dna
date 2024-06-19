@@ -152,7 +152,7 @@ collect information.
 
    ```sh
      cd ~/pep-dna/pepdna
-     ./configure --with-rina --with-ccn --with-localhost
+     ./configure --with-rina --with-ccn --with-local-receiver
      make all
      sudo -E make install
    ```
@@ -160,10 +160,11 @@ collect information.
 To configure PEP-DNA with RINA support or CCN suport `--with-rina` or
 `--with-ccn` flags needs to be used. Use `--with-debug` to build PEP-DNA with
 DEBUG flag.  **Note** that building in debug mode will reduce the performance
-of the proxy and print detailed logging in the kern.log file. When PEP-DNA
-runs at the same host as the server, it needs to be configured with
-`---with-localhost` flag in order to enable full transpacency at this case
-(More details will be provided later). For our experiments, the commands
+of the proxy and print detailed logging in the `/var/log/kern.log` file. When PEP-DNA
+runs at the same host as the receiver, a.k.a the TCP server,
+it needs to be configured with `---with-local-receiver` flag in order to enable full transpacency at this case.
+Configure the proxy using `--with-local-sender` if PEP-DNA is running at the same host as the sender, a.k.a TCP client.
+More details about the building process can be found at the Wiki section. For our experiments, the commands
 above are sufficient.
 
 All the testing applications and scripts used to run the experiments, collect
